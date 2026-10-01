@@ -1,38 +1,43 @@
 (function(){
   function esc(v){return String(v??'').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[s]));}
-  function ensureAdminUi(){
-    if(document.getElementById('adminNav')) return;
-    const nav=document.getElementById('nav');
-    if(!nav) return;
-    const btn=document.createElement('button');
-    btn.id='adminNav';
-    btn.style.display='none';
-    btn.innerHTML='<span>🛡️</span>Admin General';
-    btn.onclick=function(){ if(typeof show==='function') show('admin',btn); loadAdminUsers(); };
-    nav.appendChild(btn);
 
+  function ensureAdminUi(){
+    const nav=document.getElementById('nav');
     const main=document.querySelector('main');
-    if(!main) return;
-    const section=document.createElement('section');
-    section.id='admin';
-    section.className='module';
-    section.innerHTML=`
-      <div class="hero"><h1>🛡️ Administrador General</h1><p>Control total de usuarios y accesos de MIRED360 Beauty.</p></div>
-      <div class="card">
-        <div class="section-title"><h2>Crear usuario</h2><span class="status">Acceso protegido</span></div>
-        <div class="form">
-          <input id="admName" placeholder="Nombre completo">
-          <input id="admEmail" type="email" placeholder="Correo electrónico">
-          <select id="admRole"><option value="user">Usuario</option><option value="staff">Empleado</option><option value="admin">Administrador</option></select>
-          <button class="btn" onclick="createAdminUser()">Crear usuario</button>
+    if(!nav||!main) return;
+
+    let btn=document.getElementById('adminNav');
+    if(!btn){
+      btn=document.createElement('button');
+      btn.id='adminNav';
+      btn.style.display='none';
+      btn.innerHTML='<span>🛡️</span>Admin General';
+      btn.onclick=function(){ if(typeof show==='function') show('admin',btn); loadAdminUsers(); };
+      nav.appendChild(btn);
+    }
+
+    if(!document.getElementById('admin')){
+      const section=document.createElement('section');
+      section.id='admin';
+      section.className='module';
+      section.innerHTML=`
+        <div class="hero"><h1>🛡️ Administrador General</h1><p>Control total de usuarios y accesos de MIRED360 Beauty.</p></div>
+        <div class="card">
+          <div class="section-title"><h2>Crear usuario</h2><span class="status">Acceso protegido</span></div>
+          <div class="form">
+            <input id="admName" placeholder="Nombre completo">
+            <input id="admEmail" type="email" placeholder="Correo electrónico">
+            <select id="admRole"><option value="user">Usuario</option><option value="staff">Empleado</option><option value="admin">Administrador</option></select>
+            <button class="btn" onclick="createAdminUser()">Crear usuario</button>
+          </div>
+          <div id="admMsg" class="empty" style="padding:10px 0 0"></div>
         </div>
-        <div id="admMsg" class="empty" style="padding:10px 0 0"></div>
-      </div>
-      <div class="card" style="margin-top:18px">
-        <div class="section-title"><h2>Usuarios registrados</h2><button class="btn" onclick="loadAdminUsers()">Actualizar</button></div>
-        <div id="adminUsersList" class="list"></div>
-      </div>`;
-    main.appendChild(section);
+        <div class="card" style="margin-top:18px">
+          <div class="section-title"><h2>Usuarios registrados</h2><button class="btn" onclick="loadAdminUsers()">Actualizar</button></div>
+          <div id="adminUsersList" class="list"></div>
+        </div>`;
+      main.appendChild(section);
+    }
   }
 
   async function callAdmin(action,payload={}){
@@ -72,7 +77,8 @@
       if(!email) throw new Error('Escribe el correo del nuevo usuario.');
       msg.textContent='Creando usuario...';
       await callAdmin('create',{full_name,email,role});
-      document.getElementById('admName').value='';document.getElementById('admEmail').value='';
+      document.getElementById('admName').value='';
+      document.getElementById('admEmail').value='';
       msg.textContent='Usuario creado correctamente.';
       await loadAdminUsers();
     }catch(e){msg.textContent=e.message||'No fue posible crear el usuario.';}
@@ -95,17 +101,36 @@
   async function syncAdminAccess(session){
     ensureAdminUi();
     const btn=document.getElementById('adminNav');
-    if(!btn){return;}
+    if(!btn) return;
     if(!session?.user){btn.style.display='none';return;}
-    const {data}=await window.sbClient.from('profiles').select('role').eq('id',session.user.id).single();
-    btn.style.display=data?.role==='admin'?'':'none';
+
+    try{
+      await callAdmin('list');
+      btn.style.display='';
+      const userBox=document.querySelector('.top .user');
+      if(userBox && !document.getElementById('adminGeneralBadge')){
+        const badge=document.createElement('strong');
+        badge.id='adminGeneralBadge';
+        badge.textContent=' · Administrador General';
+        userBox.appendChild(badge);
+      }
+    }catch(_e){
+      btn.style.display='none';
+    }
   }
 
-  document.addEventListener('DOMContentLoaded',async()=>{
+  async function bootAdmin(){
     ensureAdminUi();
     if(!window.sbClient) return;
     const {data}=await window.sbClient.auth.getSession();
     await syncAdminAccess(data.session);
     window.sbClient.auth.onAuthStateChange((_e,s)=>syncAdminAccess(s));
-  });
+    setTimeout(async()=>{
+      const {data:d}=await window.sbClient.auth.getSession();
+      await syncAdminAccess(d.session);
+    },700);
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bootAdmin);
+  else bootAdmin();
 })();
