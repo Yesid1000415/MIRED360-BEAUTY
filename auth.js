@@ -13,7 +13,7 @@ authShell.innerHTML=`
   <div class="auth-card">
     <div class="auth-brand">
       <div class="logo">MIRED<b>360</b><small>BEAUTY</small></div>
-      <p>Acceso seguro con código de 6 dígitos.</p>
+      <p>Acceso seguro con código temporal.</p>
     </div>
     <div class="auth-tabs" id="authTabs">
       <button id="loginTab" class="auth-tab active" type="button">Ingresar</button>
@@ -23,7 +23,7 @@ authShell.innerHTML=`
       <input id="authName" class="auth-hidden" autocomplete="name" placeholder="Nombre completo">
       <input id="authEmail" type="email" autocomplete="email" placeholder="Correo electrónico" required>
       <div id="otpBox" class="auth-hidden">
-        <input id="authOtp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="Código de 6 dígitos">
+        <input id="authOtp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" pattern="[0-9]{6,10}" placeholder="Código de acceso">
       </div>
       <button id="authSubmit" class="btn" type="submit">Enviar código</button>
       <button id="changeEmailBtn" class="auth-hidden" type="button">Cambiar correo</button>
@@ -76,7 +76,7 @@ function setOtpStage(enabled){
   changeEmailBtn.classList.toggle('auth-hidden',!enabled);
   authSubmit.textContent=enabled?'Verificar y entrar':'Enviar código';
   if(enabled){
-    setAuthMessage('Escribe el código de 6 dígitos enviado a '+pendingEmail+'.','ok');
+    setAuthMessage('Escribe el código enviado a '+pendingEmail+'.','ok');
     setTimeout(()=>authOtp.focus(),50);
   }
 }
@@ -93,7 +93,7 @@ changeEmailBtn.addEventListener('click',()=>{
 });
 
 authOtp.addEventListener('input',()=>{
-  authOtp.value=authOtp.value.replace(/\D/g,'').slice(0,6);
+  authOtp.value=authOtp.value.replace(/\D/g,'').slice(0,10);
 });
 
 function friendlyAuthError(err){
@@ -166,7 +166,7 @@ document.getElementById('authForm').addEventListener('submit',async(e)=>{
       setOtpStage(true);
     }else{
       const token=authOtp.value.trim();
-      if(!/^\d{6}$/.test(token)) throw new Error('Escribe el código completo de 6 dígitos.');
+      if(!/^\d{6,10}$/.test(token)) throw new Error('Escribe el código completo recibido en tu correo.');
       setAuthMessage('Verificando código...');
       const {data,error}=await sbClient.auth.verifyOtp({
         email:pendingEmail,
