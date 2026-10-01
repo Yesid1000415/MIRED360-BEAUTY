@@ -13,7 +13,7 @@ authShell.innerHTML=`
   <div class="auth-card">
     <div class="auth-brand">
       <div class="logo">MIRED<b>360</b><small>BEAUTY</small></div>
-      <p>Acceso seguro con código de 6 dígitos.</p>
+      <p>Acceso seguro con código por WhatsApp.</p>
     </div>
     <div class="auth-tabs" id="authTabs">
       <button id="loginTab" class="auth-tab active" type="button">Ingresar</button>
@@ -21,37 +21,52 @@ authShell.innerHTML=`
     </div>
     <form id="authForm" class="auth-form">
       <input id="authName" class="auth-hidden" autocomplete="name" placeholder="Nombre completo">
-      <input id="authEmail" type="email" autocomplete="email" placeholder="Correo electrónico" required>
+      <input id="authPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Celular (ej. 3229432085)" required>
       <div id="otpBox" class="auth-hidden">
         <input id="authOtp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="Código de 6 dígitos">
       </div>
-      <button id="authSubmit" class="btn" type="submit">Enviar código</button>
-      <button id="changeEmailBtn" class="auth-hidden" type="button">Cambiar correo</button>
+      <button id="authSubmit" class="btn" type="submit">Enviar código por WhatsApp</button>
+      <button id="changePhoneBtn" class="auth-hidden" type="button">Cambiar número</button>
     </form>
     <div id="authMessage" class="auth-message"></div>
-    <div class="auth-note">Sin contraseña. Recibirás un código temporal en tu correo.</div>
+    <div class="auth-note">Sin contraseña. Recibirás un código temporal por WhatsApp.</div>
   </div>`;
 document.body.insertBefore(authShell,document.body.firstChild);
 
 let authMode='login';
 let otpStage=false;
-let pendingEmail='';
+let pendingPhone='';
 let pendingName='';
 
 const loginTab=document.getElementById('loginTab');
 const registerTab=document.getElementById('registerTab');
 const authTabs=document.getElementById('authTabs');
 const authName=document.getElementById('authName');
-const authEmail=document.getElementById('authEmail');
+const authPhone=document.getElementById('authPhone');
 const otpBox=document.getElementById('otpBox');
 const authOtp=document.getElementById('authOtp');
 const authSubmit=document.getElementById('authSubmit');
-const changeEmailBtn=document.getElementById('changeEmailBtn');
+const changePhoneBtn=document.getElementById('changePhoneBtn');
 const authMessage=document.getElementById('authMessage');
 
 function setAuthMessage(text,type=''){
   authMessage.textContent=text||'';
   authMessage.className='auth-message'+(type?' '+type:'');
+}
+
+function normalizePhone(value){
+  const raw=String(value||'').trim();
+  const digits=raw.replace(/\D/g,'');
+  if(digits.startsWith('57')&&digits.length===12) return '+'+digits;
+  if(digits.length===10&&digits.startsWith('3')) return '+57'+digits;
+  if(raw.startsWith('+')&&digits.length>=10) return '+'+digits;
+  throw new Error('Escribe un celular válido. En Colombia usa 10 dígitos, por ejemplo 3229432085.');
+}
+
+function maskPhone(phone){
+  const d=phone.replace(/\D/g,'');
+  if(d.length<7) return phone;
+  return '+'+d.slice(0,2)+' '+d.slice(2,5)+' *** '+d.slice(-4);
 }
 
 function setMode(mode){
@@ -62,7 +77,7 @@ function setMode(mode){
   registerTab.classList.toggle('active',registering);
   authName.classList.toggle('auth-hidden',!registering);
   authName.required=registering;
-  authSubmit.textContent='Enviar código';
+  authSubmit.textContent='Enviar código por WhatsApp';
   setAuthMessage('');
 }
 
@@ -70,35 +85,40 @@ function setOtpStage(enabled){
   otpStage=enabled;
   authTabs.classList.toggle('auth-hidden',enabled);
   authName.classList.toggle('auth-hidden',enabled || authMode!=='register');
-  authEmail.classList.toggle('auth-hidden',enabled);
+  authPhone.classList.toggle('auth-hidden',enabled);
   otpBox.classList.toggle('auth-hidden',!enabled);
   authOtp.required=enabled;
-  changeEmailBtn.classList.toggle('auth-hidden',!enabled);
-  authSubmit.textContent=enabled?'Verificar y entrar':'Enviar código';
+  changePhoneBtn.classList.toggle('auth-hidden',!enabled);
+  authSubmit.textContent=enabled?'Verificar y entrar':'Enviar código por WhatsApp';
   if(enabled){
-    setAuthMessage('Escribe el código de 6 dígitos enviado a '+pendingEmail+'.','ok');
+    setAuthMessage('Escribe el código de 6 dígitos enviado por WhatsApp a '+maskPhone(pendingPhone)+'.','ok');
     setTimeout(()=>authOtp.focus(),50);
   }
 }
 
 loginTab.addEventListener('click',()=>setMode('login'));
 registerTab.addEventListener('click',()=>setMode('register'));
-changeEmailBtn.addEventListener('click',()=>{
+changePhoneBtn.addEventListener('click',()=>{
   authOtp.value='';
-  pendingEmail='';
+  pendingPhone='';
   pendingName='';
   setOtpStage(false);
   setAuthMessage('');
-  authEmail.focus();
+  authPhone.focus();
 });
 
 authOtp.addEventListener('input',()=>{
   authOtp.value=authOtp.value.replace(/\D/g,'').slice(0,6);
 });
 
+authPhone.addEventListener('input',()=>{
+  if(!authPhone.value.trim().startsWith('+')) authPhone.value=authPhone.value.replace(/\D/g,'').slice(0,10);
+});
+
 function friendlyAuthError(err){
   const msg=(err?.message||'').toLowerCase();
-  if(msg.includes('rate limit')) return 'Se alcanzó temporalmente el límite de envío de correos. Espera unos minutos e inténtalo de nuevo.';
+  if(msg.includes('unsupported phone provider')||msg.includes('phone provider')||msg.includes('sms provider')||msg.includes('phone')&&msg.includes('disabled')) return 'El acceso por WhatsApp aún necesita activar Phone Auth y conectar Twilio en Supabase.';
+  if(msg.includes('rate limit')||msg.includes('too many')) return 'Se alcanzó temporalmente el límite de códigos. Espera un momento e inténtalo nuevamente.';
   if(msg.includes('token has expired')||msg.includes('expired')) return 'El código venció. Solicita uno nuevo.';
   if(msg.includes('invalid')&&msg.includes('token')) return 'El código no es válido. Revísalo e intenta nuevamente.';
   return err?.message||'No fue posible completar el acceso.';
@@ -115,7 +135,7 @@ function ensureLogoutButton(user){
     label.style.marginTop='4px';
     userBox.appendChild(label);
   }
-  label.textContent=user?.email||'';
+  label.textContent=user?.phone||user?.email||'';
   if(!document.getElementById('logoutBtn')){
     const btn=document.createElement('button');
     btn.id='logoutBtn';
@@ -148,20 +168,20 @@ document.getElementById('authForm').addEventListener('submit',async(e)=>{
   authSubmit.disabled=true;
   try{
     if(!otpStage){
-      const email=authEmail.value.trim().toLowerCase();
+      const phone=normalizePhone(authPhone.value);
       const fullName=authName.value.trim();
-      if(!email) throw new Error('Escribe tu correo electrónico.');
       if(authMode==='register'&&!fullName) throw new Error('Escribe tu nombre completo.');
-      setAuthMessage('Enviando código...');
+      setAuthMessage('Enviando código por WhatsApp...');
       const {error}=await sbClient.auth.signInWithOtp({
-        email,
+        phone,
         options:{
+          channel:'whatsapp',
           shouldCreateUser:authMode==='register',
           data:authMode==='register'?{full_name:fullName}:undefined
         }
       });
       if(error) throw error;
-      pendingEmail=email;
+      pendingPhone=phone;
       pendingName=fullName;
       setOtpStage(true);
     }else{
@@ -169,9 +189,9 @@ document.getElementById('authForm').addEventListener('submit',async(e)=>{
       if(!/^\d{6}$/.test(token)) throw new Error('Escribe el código completo de 6 dígitos.');
       setAuthMessage('Verificando código...');
       const {data,error}=await sbClient.auth.verifyOtp({
-        email:pendingEmail,
+        phone:pendingPhone,
         token,
-        type:'email'
+        type:'sms'
       });
       if(error) throw error;
       if(!data?.session) throw new Error('No se pudo iniciar la sesión.');
