@@ -1,22 +1,28 @@
 (function(){
-  function esc(v){return String(v??'').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[s]));}
+  function esc(v){return String(v??'').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'}[s]));}
   async function callBiz(action,payload={}){
     const {data,error}=await window.sbClient.functions.invoke('admin-businesses',{body:{action,...payload}});
     if(error) throw error;
     if(data?.error) throw new Error(data.error);
     return data;
   }
+  function cleanupForBusinessUser(){
+    document.getElementById('adminNav')?.remove();
+    const old=document.getElementById('admin'); if(old) old.style.display='none';
+    const top=document.querySelector('.top .user');
+    if(top && top.textContent.includes('Administrador General')) top.innerHTML='<span id="topBusinessName">Mi Barbería</span> · Administrador';
+  }
   function buildSuperAdmin(){
     const nav=document.getElementById('nav');
     const main=document.querySelector('main');
     if(!nav||!main) return;
     nav.innerHTML=`<button id="saHomeBtn" class="active"><span>🛡️</span>Panel General</button><button id="saBizBtn"><span>🏪</span>Comercios</button>`;
-    [...main.querySelectorAll('section.module')].forEach(s=>s.style.display='none');
+    [...main.querySelectorAll('section.module')].forEach(s=>{s.classList.remove('active');s.style.display='none';});
     let sec=document.getElementById('superadmin');
     if(!sec){
       sec=document.createElement('section');sec.id='superadmin';sec.className='module active';
       sec.innerHTML=`
-      <div class="hero"><h1>🛡️ Administrador General</h1><p>Control central de MIRED360 Beauty.</p></div>
+      <div class="hero"><h1>🛡️ Administrador General</h1><p>Control central de comercios, administradores y estado de la plataforma.</p></div>
       <div class="stats">
         <div class="card stat"><label>🏪 Comercios</label><strong id="saBusinesses">0</strong><em>Registrados</em></div>
         <div class="card stat"><label>✅ Activos</label><strong id="saActive">0</strong><em>Operando</em></div>
@@ -26,7 +32,7 @@
         <div class="section-title"><h2>Crear comercio</h2><span class="status">Administrador General</span></div>
         <div class="form">
           <input id="bizName" placeholder="Nombre del comercio">
-          <input id="bizOwner" placeholder="Nombre del administrador">
+          <input id="bizOwner" placeholder="Nombre del administrador del comercio">
           <input id="bizEmail" type="email" placeholder="Correo del administrador">
           <input id="bizPhone" placeholder="Teléfono / WhatsApp">
           <input id="bizAddress" placeholder="Dirección">
@@ -39,10 +45,12 @@
         <div id="bizList" class="list"></div>
       </div>`;
       main.appendChild(sec);
-    } else {sec.style.display='block';sec.classList.add('active');}
+    }
+    sec.style.display='block';sec.classList.add('active');
     const top=document.querySelector('.top .user'); if(top) top.innerHTML='<strong>Administrador General</strong>';
-    document.getElementById('saHomeBtn').onclick=()=>{document.getElementById('superadmin').scrollIntoView({behavior:'smooth'});};
-    document.getElementById('saBizBtn').onclick=()=>{document.getElementById('bizName').scrollIntoView({behavior:'smooth',block:'center'});};
+    const search=document.querySelector('.top .search'); if(search){search.placeholder='Buscar comercio...';search.value='';}
+    document.getElementById('saHomeBtn').onclick=()=>window.scrollTo({top:0,behavior:'smooth'});
+    document.getElementById('saBizBtn').onclick=()=>document.getElementById('bizName')?.scrollIntoView({behavior:'smooth',block:'center'});
     document.getElementById('bizCreateBtn').onclick=createBusiness;
     document.getElementById('bizRefreshBtn').onclick=loadBusinesses;
   }
@@ -70,11 +78,11 @@
   async function createBusiness(){
     const msg=document.getElementById('bizMsg');
     try{
-      const payload={name:bizName.value.trim(),owner_name:bizOwner.value.trim(),owner_email:bizEmail.value.trim(),phone:bizPhone.value.trim(),address:bizAddress.value.trim()};
+      const payload={name:document.getElementById('bizName').value.trim(),owner_name:document.getElementById('bizOwner').value.trim(),owner_email:document.getElementById('bizEmail').value.trim(),phone:document.getElementById('bizPhone').value.trim(),address:document.getElementById('bizAddress').value.trim()};
       if(!payload.name||!payload.owner_email) throw new Error('Nombre del comercio y correo del administrador son obligatorios.');
       msg.textContent='Creando comercio...'; await callBiz('create',payload);
-      bizName.value='';bizOwner.value='';bizEmail.value='';bizPhone.value='';bizAddress.value='';msg.textContent='Comercio creado correctamente.';
-      await loadSummary();await loadBusinesses();
+      ['bizName','bizOwner','bizEmail','bizPhone','bizAddress'].forEach(id=>document.getElementById(id).value='');
+      msg.textContent='Comercio creado correctamente.'; await loadSummary();await loadBusinesses();
     }catch(e){msg.textContent=e.message||'No fue posible crear el comercio.';}
   }
   window.editBusiness=async function(id,name,phone,address){
@@ -82,23 +90,19 @@
     const p=prompt('Teléfono / WhatsApp:',phone);if(p===null)return;
     const a=prompt('Dirección:',address);if(a===null)return;
     const status=document.getElementById('st_'+id)?.value||'active';
-    try{await callBiz('update',{id,name:n,phone:p,address:a,status});await loadSummary();await loadBusinesses();}
-    catch(e){alert(e.message||'No fue posible actualizar.');}
+    try{await callBiz('update',{id,name:n,phone:p,address:a,status});await loadSummary();await loadBusinesses();}catch(e){alert(e.message||'No fue posible actualizar.');}
   };
   window.deleteBusiness=async function(id,name){
     if(!confirm('¿Eliminar el comercio '+name+'?'))return;
-    try{await callBiz('delete',{id});await loadSummary();await loadBusinesses();}
-    catch(e){alert(e.message||'No fue posible eliminar.');}
+    try{await callBiz('delete',{id});await loadSummary();await loadBusinesses();}catch(e){alert(e.message||'No fue posible eliminar.');}
   };
   async function boot(){
     if(!window.sbClient) return;
     const {data:{session}}=await window.sbClient.auth.getSession(); if(!session?.user) return;
     const {data:profile}=await window.sbClient.from('profiles').select('role').eq('id',session.user.id).single();
-    if(profile?.role==='superadmin'){
-      buildSuperAdmin();
-      await loadSummary();await loadBusinesses();
-    }
+    if(profile?.role==='superadmin'){buildSuperAdmin();await loadSummary();await loadBusinesses();}
+    else cleanupForBusinessUser();
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,300));else setTimeout(boot,300);
-  window.sbClient?.auth?.onAuthStateChange?.((_e,s)=>{if(s?.user)setTimeout(boot,300);});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,350));else setTimeout(boot,350);
+  window.sbClient?.auth?.onAuthStateChange?.((_e,s)=>{if(s?.user)setTimeout(boot,350);});
 })();
