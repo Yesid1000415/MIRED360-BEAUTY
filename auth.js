@@ -1,5 +1,6 @@
 const SUPABASE_URL='https://lyefgbckvzfxkjjumvmp.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_9WL85w0XrKJwr1CMAHl6-w__n2-Ziix';
+const APP_URL='https://yesid1000415.github.io/MIRED360-BEAUTY/';
 const sbClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 window.sbClient=sbClient;
 
@@ -104,7 +105,14 @@ document.getElementById('authForm').addEventListener('submit',async(e)=>{
   try{
     if(authMode==='register'){
       const fullName=authName.value.trim();
-      const {data,error}=await sbClient.auth.signUp({email,password,options:{data:{full_name:fullName}}});
+      const {data,error}=await sbClient.auth.signUp({
+        email,
+        password,
+        options:{
+          emailRedirectTo:APP_URL,
+          data:{full_name:fullName}
+        }
+      });
       if(error) throw error;
       if(data.session){
         setAuthMessage('Cuenta creada correctamente.','ok');
