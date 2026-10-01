@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MIRED360 Beauty</title>
+<style>
+:root{--dark:#111827;--gold:#d4a72c;--bg:#f5f6f8;--card:#fff;--muted:#6b7280}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#111827}
+header{background:var(--dark);color:white;padding:18px 22px;display:flex;justify-content:space-between;align-items:center}
+.brand{font-size:22px;font-weight:800}.brand span{color:var(--gold)}
+main{max-width:1100px;margin:auto;padding:24px}.hello h1{margin:0 0 5px}.hello p{margin:0;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:22px 0}.card{background:var(--card);border-radius:16px;padding:18px;box-shadow:0 3px 14px #0000000c}
+.stat b{font-size:24px;display:block;margin-top:8px}.stat small{color:var(--muted)}
+.menu{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.action{cursor:pointer;border:0;text-align:left;font:inherit}.icon{font-size:30px}.action h3{margin:10px 0 5px}.action p{color:var(--muted);margin:0;font-size:14px}
+.today{margin-top:22px}.appt{display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding:13px 0}.pill{background:#ecfdf5;color:#047857;padding:6px 10px;border-radius:20px;font-size:12px}
+footer{text-align:center;color:var(--muted);padding:28px}
+@media(max-width:700px){.stats{grid-template-columns:1fr 1fr}.menu{grid-template-columns:1fr 1fr}main{padding:16px}}
+</style>
+</head>
+<body>
+<header><div class="brand">MIRED360 <span>Beauty</span></div><div>💈 Mi Barbería</div></header>
+<main>
+<section class="hello"><h1>Panel de tu negocio</h1><p>Todo lo importante de tu barbería en un solo lugar.</p></section>
+<section class="stats">
+<div class="card stat"><small>💰 Ventas de hoy</small><b>$0</b></div>
+<div class="card stat"><small>📅 Citas de hoy</small><b>0</b></div>
+<div class="card stat"><small>👥 Clientes atendidos</small><b>0</b></div>
+<div class="card stat"><small>✂️ Servicios realizados</small><b>0</b></div>
+</section>
+<section class="menu">
+<button class="card action" onclick="openModule('Agenda')"><div class="icon">📅</div><h3>Agenda</h3><p>Organiza citas y horarios.</p></button>
+<button class="card action" onclick="openModule('Clientes')"><div class="icon">👥</div><h3>Clientes</h3><p>Historial y datos de tus clientes.</p></button>
+<button class="card action" onclick="openModule('Servicios')"><div class="icon">✂️</div><h3>Servicios</h3><p>Cortes, barba, tratamientos y precios.</p></button>
+<button class="card action" onclick="openModule('Barberos')"><div class="icon">💈</div><h3>Barberos</h3><p>Equipo, producción y comisiones.</p></button>
+<button class="card action" onclick="openModule('Ventas')"><div class="icon">💵</div><h3>Ventas</h3><p>Registra servicios y métodos de pago.</p></button>
+<button class="card action" onclick="openModule('Reportes')"><div class="icon">📊</div><h3>Reportes</h3><p>Resultados diarios, semanales y mensuales.</p></button>
+</section>
+<section class="card today"><h2>Próximas citas</h2><div id="appointments"><p style="color:#6b7280">Todavía no hay citas registradas.</p></div></section>
+</main>
+<footer>MIRED360SERVICIOS · Software para hacer crecer tu negocio</footer>
+<script>
+function openModule(name){alert(name+' será el próximo módulo funcional de MIRED360 Beauty.');}
+</script>
+</body></html>
