@@ -1,136 +1,104 @@
 (function(){
   function esc(v){return String(v??'').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[s]));}
-
-  function ensureAdminUi(){
-    const nav=document.getElementById('nav');
-    const main=document.querySelector('main');
-    if(!nav||!main) return;
-
-    let btn=document.getElementById('adminNav');
-    if(!btn){
-      btn=document.createElement('button');
-      btn.id='adminNav';
-      btn.style.display='none';
-      btn.innerHTML='<span>🛡️</span>Admin General';
-      btn.onclick=function(){ if(typeof show==='function') show('admin',btn); loadAdminUsers(); };
-      nav.appendChild(btn);
-    }
-
-    if(!document.getElementById('admin')){
-      const section=document.createElement('section');
-      section.id='admin';
-      section.className='module';
-      section.innerHTML=`
-        <div class="hero"><h1>🛡️ Administrador General</h1><p>Control total de usuarios y accesos de MIRED360 Beauty.</p></div>
-        <div class="card">
-          <div class="section-title"><h2>Crear usuario</h2><span class="status">Acceso protegido</span></div>
-          <div class="form">
-            <input id="admName" placeholder="Nombre completo">
-            <input id="admEmail" type="email" placeholder="Correo electrónico">
-            <select id="admRole"><option value="user">Usuario</option><option value="staff">Empleado</option><option value="admin">Administrador</option></select>
-            <button class="btn" onclick="createAdminUser()">Crear usuario</button>
-          </div>
-          <div id="admMsg" class="empty" style="padding:10px 0 0"></div>
-        </div>
-        <div class="card" style="margin-top:18px">
-          <div class="section-title"><h2>Usuarios registrados</h2><button class="btn" onclick="loadAdminUsers()">Actualizar</button></div>
-          <div id="adminUsersList" class="list"></div>
-        </div>`;
-      main.appendChild(section);
-    }
-  }
-
-  async function callAdmin(action,payload={}){
-    const {data,error}=await window.sbClient.functions.invoke('admin-users',{body:{action,...payload}});
+  async function callBiz(action,payload={}){
+    const {data,error}=await window.sbClient.functions.invoke('admin-businesses',{body:{action,...payload}});
     if(error) throw error;
     if(data?.error) throw new Error(data.error);
     return data;
   }
-
-  window.loadAdminUsers=async function(){
-    const box=document.getElementById('adminUsersList');
-    if(!box) return;
-    box.innerHTML='<div class="empty">Cargando usuarios...</div>';
+  function buildSuperAdmin(){
+    const nav=document.getElementById('nav');
+    const main=document.querySelector('main');
+    if(!nav||!main) return;
+    nav.innerHTML=`<button id="saHomeBtn" class="active"><span>🛡️</span>Panel General</button><button id="saBizBtn"><span>🏪</span>Comercios</button>`;
+    [...main.querySelectorAll('section.module')].forEach(s=>s.style.display='none');
+    let sec=document.getElementById('superadmin');
+    if(!sec){
+      sec=document.createElement('section');sec.id='superadmin';sec.className='module active';
+      sec.innerHTML=`
+      <div class="hero"><h1>🛡️ Administrador General</h1><p>Control central de MIRED360 Beauty.</p></div>
+      <div class="stats">
+        <div class="card stat"><label>🏪 Comercios</label><strong id="saBusinesses">0</strong><em>Registrados</em></div>
+        <div class="card stat"><label>✅ Activos</label><strong id="saActive">0</strong><em>Operando</em></div>
+        <div class="card stat"><label>👥 Usuarios</label><strong id="saUsers">0</strong><em>Plataforma</em></div>
+      </div>
+      <div class="card" style="margin-top:18px">
+        <div class="section-title"><h2>Crear comercio</h2><span class="status">Administrador General</span></div>
+        <div class="form">
+          <input id="bizName" placeholder="Nombre del comercio">
+          <input id="bizOwner" placeholder="Nombre del administrador">
+          <input id="bizEmail" type="email" placeholder="Correo del administrador">
+          <input id="bizPhone" placeholder="Teléfono / WhatsApp">
+          <input id="bizAddress" placeholder="Dirección">
+          <button class="btn" id="bizCreateBtn">Crear comercio</button>
+        </div>
+        <div id="bizMsg" class="empty" style="padding:10px 0 0"></div>
+      </div>
+      <div class="card" style="margin-top:18px">
+        <div class="section-title"><h2>Comercios registrados</h2><button class="btn" id="bizRefreshBtn">Actualizar</button></div>
+        <div id="bizList" class="list"></div>
+      </div>`;
+      main.appendChild(sec);
+    } else {sec.style.display='block';sec.classList.add('active');}
+    const top=document.querySelector('.top .user'); if(top) top.innerHTML='<strong>Administrador General</strong>';
+    document.getElementById('saHomeBtn').onclick=()=>{document.getElementById('superadmin').scrollIntoView({behavior:'smooth'});};
+    document.getElementById('saBizBtn').onclick=()=>{document.getElementById('bizName').scrollIntoView({behavior:'smooth',block:'center'});};
+    document.getElementById('bizCreateBtn').onclick=createBusiness;
+    document.getElementById('bizRefreshBtn').onclick=loadBusinesses;
+  }
+  async function loadSummary(){
+    try{const d=await callBiz('summary');
+      document.getElementById('saBusinesses').textContent=d.businesses??0;
+      document.getElementById('saActive').textContent=d.active??0;
+      document.getElementById('saUsers').textContent=d.users??0;
+    }catch(e){}
+  }
+  async function loadBusinesses(){
+    const box=document.getElementById('bizList'); if(!box) return;
+    box.innerHTML='<div class="empty">Cargando comercios...</div>';
     try{
-      const data=await callAdmin('list');
-      const users=data.users||[];
-      if(!users.length){box.innerHTML='<div class="empty">No hay usuarios registrados.</div>';return;}
-      box.innerHTML=users.map(u=>`<div class="row" style="align-items:flex-start;gap:12px;flex-wrap:wrap">
-        <div style="min-width:220px;flex:1"><b>${esc(u.full_name||'Sin nombre')}</b><div style="color:var(--muted);font-size:13px">${esc(u.email||'')}</div></div>
-        <select id="role_${u.id}" style="background:#07121c;border:1px solid var(--line);border-radius:9px;color:white;padding:9px">
-          <option value="user" ${u.role==='user'?'selected':''}>Usuario</option>
-          <option value="staff" ${u.role==='staff'?'selected':''}>Empleado</option>
-          <option value="admin" ${u.role==='admin'?'selected':''}>Administrador</option>
-        </select>
-        <button class="btn" onclick="editAdminUser('${u.id}','${esc(u.email||'')}','${esc(u.full_name||'')}')">Editar</button>
-        <button class="btn" style="background:#6b1f1f" onclick="deleteAdminUser('${u.id}','${esc(u.email||'')}')">Eliminar</button>
+      const d=await callBiz('list'); const rows=d.businesses||[];
+      if(!rows.length){box.innerHTML='<div class="empty">No hay comercios registrados.</div>';return;}
+      box.innerHTML=rows.map(b=>`<div class="row" style="align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:240px"><b>${esc(b.name)}</b><div style="color:var(--muted);font-size:13px">${esc(b.admin_email||'')} · ${esc(b.phone||'')} · ${esc(b.address||'')}</div></div>
+        <select id="st_${b.id}" style="background:#07121c;border:1px solid var(--line);border-radius:9px;color:white;padding:9px"><option value="active" ${b.status==='active'?'selected':''}>Activo</option><option value="pending" ${b.status==='pending'?'selected':''}>Pendiente</option><option value="suspended" ${b.status==='suspended'?'selected':''}>Suspendido</option></select>
+        <button class="btn" onclick="window.editBusiness(${b.id},'${esc(b.name)}','${esc(b.phone||'')}','${esc(b.address||'')}')">Editar</button>
+        <button class="btn" style="background:#6b1f1f" onclick="window.deleteBusiness(${b.id},'${esc(b.name)}')">Eliminar</button>
       </div>`).join('');
-    }catch(e){box.innerHTML='<div class="empty">'+esc(e.message||'No fue posible cargar usuarios')+'</div>';}
-  };
-
-  window.createAdminUser=async function(){
-    const msg=document.getElementById('admMsg');
+    }catch(e){box.innerHTML='<div class="empty">'+esc(e.message||'No fue posible cargar comercios')+'</div>';}
+  }
+  async function createBusiness(){
+    const msg=document.getElementById('bizMsg');
     try{
-      const full_name=document.getElementById('admName').value.trim();
-      const email=document.getElementById('admEmail').value.trim();
-      const role=document.getElementById('admRole').value;
-      if(!email) throw new Error('Escribe el correo del nuevo usuario.');
-      msg.textContent='Creando usuario...';
-      await callAdmin('create',{full_name,email,role});
-      document.getElementById('admName').value='';
-      document.getElementById('admEmail').value='';
-      msg.textContent='Usuario creado correctamente.';
-      await loadAdminUsers();
-    }catch(e){msg.textContent=e.message||'No fue posible crear el usuario.';}
-  };
-
-  window.editAdminUser=async function(id,currentEmail,currentName){
-    const email=prompt('Correo del usuario:',currentEmail); if(email===null) return;
-    const full_name=prompt('Nombre completo:',currentName); if(full_name===null) return;
-    const role=document.getElementById('role_'+id)?.value||'user';
-    try{await callAdmin('update',{id,email,full_name,role});alert('Usuario actualizado.');await loadAdminUsers();}
+      const payload={name:bizName.value.trim(),owner_name:bizOwner.value.trim(),owner_email:bizEmail.value.trim(),phone:bizPhone.value.trim(),address:bizAddress.value.trim()};
+      if(!payload.name||!payload.owner_email) throw new Error('Nombre del comercio y correo del administrador son obligatorios.');
+      msg.textContent='Creando comercio...'; await callBiz('create',payload);
+      bizName.value='';bizOwner.value='';bizEmail.value='';bizPhone.value='';bizAddress.value='';msg.textContent='Comercio creado correctamente.';
+      await loadSummary();await loadBusinesses();
+    }catch(e){msg.textContent=e.message||'No fue posible crear el comercio.';}
+  }
+  window.editBusiness=async function(id,name,phone,address){
+    const n=prompt('Nombre del comercio:',name);if(n===null)return;
+    const p=prompt('Teléfono / WhatsApp:',phone);if(p===null)return;
+    const a=prompt('Dirección:',address);if(a===null)return;
+    const status=document.getElementById('st_'+id)?.value||'active';
+    try{await callBiz('update',{id,name:n,phone:p,address:a,status});await loadSummary();await loadBusinesses();}
     catch(e){alert(e.message||'No fue posible actualizar.');}
   };
-
-  window.deleteAdminUser=async function(id,email){
-    if(!confirm('¿Eliminar definitivamente al usuario '+email+'?')) return;
-    try{await callAdmin('delete',{id});alert('Usuario eliminado.');await loadAdminUsers();}
+  window.deleteBusiness=async function(id,name){
+    if(!confirm('¿Eliminar el comercio '+name+'?'))return;
+    try{await callBiz('delete',{id});await loadSummary();await loadBusinesses();}
     catch(e){alert(e.message||'No fue posible eliminar.');}
   };
-
-  async function syncAdminAccess(session){
-    ensureAdminUi();
-    const btn=document.getElementById('adminNav');
-    if(!btn) return;
-    if(!session?.user){btn.style.display='none';return;}
-
-    try{
-      await callAdmin('list');
-      btn.style.display='';
-      const userBox=document.querySelector('.top .user');
-      if(userBox && !document.getElementById('adminGeneralBadge')){
-        const badge=document.createElement('strong');
-        badge.id='adminGeneralBadge';
-        badge.textContent=' · Administrador General';
-        userBox.appendChild(badge);
-      }
-    }catch(_e){
-      btn.style.display='none';
+  async function boot(){
+    if(!window.sbClient) return;
+    const {data:{session}}=await window.sbClient.auth.getSession(); if(!session?.user) return;
+    const {data:profile}=await window.sbClient.from('profiles').select('role').eq('id',session.user.id).single();
+    if(profile?.role==='superadmin'){
+      buildSuperAdmin();
+      await loadSummary();await loadBusinesses();
     }
   }
-
-  async function bootAdmin(){
-    ensureAdminUi();
-    if(!window.sbClient) return;
-    const {data}=await window.sbClient.auth.getSession();
-    await syncAdminAccess(data.session);
-    window.sbClient.auth.onAuthStateChange((_e,s)=>syncAdminAccess(s));
-    setTimeout(async()=>{
-      const {data:d}=await window.sbClient.auth.getSession();
-      await syncAdminAccess(d.session);
-    },700);
-  }
-
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bootAdmin);
-  else bootAdmin();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,300));else setTimeout(boot,300);
+  window.sbClient?.auth?.onAuthStateChange?.((_e,s)=>{if(s?.user)setTimeout(boot,300);});
 })();
