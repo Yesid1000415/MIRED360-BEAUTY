@@ -23,91 +23,19 @@ main{padding:25px 30px;max-width:1500px;width:100%;margin:auto}.top{display:flex
 <section id="reportes" class="module"><div class="hero"><h1>📊 Reportes</h1><p>Conoce cómo está funcionando tu barbería.</p></div><div class="card empty">Los reportes se alimentarán automáticamente de ventas, citas y servicios.</div></section>
 <section id="config" class="module"><div class="hero"><h1>⚙ Configuración</h1><p>Datos, horarios e identidad del negocio.</p></div><div class="card empty">Configuración del establecimiento y plan MIRED360 Beauty.</div></section>
 </main></div><script>
-const db={
- appointments:JSON.parse(localStorage.getItem('mb_appts')||'[]'),
- clients:JSON.parse(localStorage.getItem('mb_clients')||'[]'),
- services:JSON.parse(localStorage.getItem('mb_services')||'[]'),
- barbers:JSON.parse(localStorage.getItem('mb_barbers')||'[]'),
- sales:JSON.parse(localStorage.getItem('mb_sales')||'[]')
-};
-function save(){
- localStorage.setItem('mb_appts',JSON.stringify(db.appointments));
- localStorage.setItem('mb_clients',JSON.stringify(db.clients));
- localStorage.setItem('mb_services',JSON.stringify(db.services));
- localStorage.setItem('mb_barbers',JSON.stringify(db.barbers));
- localStorage.setItem('mb_sales',JSON.stringify(db.sales));
- render();
-}
-function show(id,b){document.querySelectorAll('.module').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));if(b)b.classList.add('active')}
-function goto(id){show(id,[...document.querySelectorAll('nav button')].find(b=>b.getAttribute('onclick')?.includes("'"+id+"'")))}
-function localDay(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
-function addAppointment(){let n=aName.value.trim();if(!n||!aDate.value||!aTime.value)return alert('Completa cliente, fecha y hora.');db.appointments.push({id:Date.now(),name:n,phone:aPhone.value,date:aDate.value,time:aTime.value,service:aService.value,status:'Programada'});aName.value=aPhone.value='';save()}
-function addClient(){let n=cName.value.trim();if(!n)return alert('Escribe el nombre del cliente.');db.clients.push({id:Date.now(),name:n,phone:cPhone.value});cName.value=cPhone.value='';save()}
-function addService(){let n=sName.value.trim(),p=Number(sPrice.value);if(!n||!p)return alert('Completa servicio y precio.');db.services.push({id:Date.now(),name:n,price:p});sName.value=sPrice.value='';save()}
-function addBarber(){let n=bName.value.trim(),p=Number(bCommission.value);if(!n)return alert('Escribe el nombre del profesional.');if(p<0||p>100)return alert('La comisión debe estar entre 0 y 100%.');db.barbers.push({id:Date.now(),name:n,commission:p||0});bName.value=bCommission.value='';save()}
-function addSale(){let amount=Number(vAmount.value);if(!amount)return alert('Ingresa el valor cobrado.');if(!vBarber.value)return alert('Selecciona el profesional.');db.sales.push({id:Date.now(),client:vClient.value.trim()||'Cliente general',service:vService.value||'Servicio',barber:vBarber.value,method:vMethod.value,amount:amount,date:new Date().toISOString()});vClient.value='';vAmount.value='';save()}
-function render(){
- agendaList.innerHTML=db.appointments.map(x=>'<div class="row"><span><b>'+x.time+' · '+x.name+'</b><br><small>'+x.date+' · '+x.service+'</small></span><span>'+(x.status||'Programada')+'</span></div>').join('')||'<div class="empty">Sin citas.</div>';
- clientList.innerHTML=db.clients.map(x=>'<div class="row"><b>'+x.name+'</b><small>'+x.phone+'</small></div>').join('')||'<div class="empty">Sin clientes.</div>';
- servicesList.innerHTML=db.services.map(x=>'<div class="row"><b>'+x.name+'</b><span>$'+Number(x.price).toLocaleString('es-CO')+'</span></div>').join('')||'<div class="empty">Sin servicios.</div>';
- barberList.innerHTML=db.barbers.map(x=>{let prod=db.sales.filter(s=>s.barber===x.name).reduce((a,s)=>a+Number(s.amount),0),com=prod*Number(x.commission)/100;return '<div class="row"><span><b>'+x.name+'</b><br><small>Producción 
- let today=localDay(),ta=db.appointments.filter(x=>x.date===today),ts=db.sales.filter(x=>x.date.slice(0,10)===today),total=ts.reduce((a,x)=>a+Number(x.amount),0);
- apptCount.textContent=ta.length;clientsCount.textContent=new Set(ts.map(x=>x.client).filter(x=>x&&x!=='Cliente general')).size;serviceCount.textContent=ts.length;sales.textContent='
- todayList.className=ta.length?'':'empty';
- todayList.innerHTML=ta.map(x=>'<div class="appt"><b>'+x.time+'</b><span>'+x.name+'<br><small>'+x.service+'</small></span><span class="status">'+(x.status||'Programada')+'</span></div>').join('')||'Todavía no hay citas registradas.';
-}
-render();
-+prod.toLocaleString('es-CO')+' · Comisión '+x.commission+'%</small></span><b>
- let today=localDay(),ta=db.appointments.filter(x=>x.date===today);
- apptCount.textContent=ta.length;clientsCount.textContent=db.clients.length;
- todayList.className=ta.length?'':'empty';
- todayList.innerHTML=ta.map(x=>'<div class="appt"><b>'+x.time+'</b><span>'+x.name+'<br><small>'+x.service+'</small></span><span class="status">'+(x.status||'Programada')+'</span></div>').join('')||'Todavía no hay citas registradas.';
-}
-render();
-+com.toLocaleString('es-CO')+'</b></div>'}).join('')||'<div class="empty">Aún no hay profesionales registrados.</div>';
- vService.innerHTML=db.services.map(x=>'<option>'+x.name+'</option>').join('')||'<option>Servicio general</option>';
- vBarber.innerHTML='<option value="">Selecciona profesional</option>'+db.barbers.map(x=>'<option>'+x.name+'</option>').join('');
- salesList.innerHTML=db.sales.slice().reverse().map(x=>'<div class="row"><span><b>'+x.service+' · '+x.client+'</b><br><small>'+x.barber+' · '+x.method+'</small></span><b>
- let today=localDay(),ta=db.appointments.filter(x=>x.date===today);
- apptCount.textContent=ta.length;clientsCount.textContent=db.clients.length;
- todayList.className=ta.length?'':'empty';
- todayList.innerHTML=ta.map(x=>'<div class="appt"><b>'+x.time+'</b><span>'+x.name+'<br><small>'+x.service+'</small></span><span class="status">'+(x.status||'Programada')+'</span></div>').join('')||'Todavía no hay citas registradas.';
-}
-render();
-+Number(x.amount).toLocaleString('es-CO')+'</b></div>').join('')||'<div class="empty">Aún no hay ventas registradas.</div>';
- let today=localDay(),ta=db.appointments.filter(x=>x.date===today);
- apptCount.textContent=ta.length;clientsCount.textContent=db.clients.length;
- todayList.className=ta.length?'':'empty';
- todayList.innerHTML=ta.map(x=>'<div class="appt"><b>'+x.time+'</b><span>'+x.name+'<br><small>'+x.service+'</small></span><span class="status">'+(x.status||'Programada')+'</span></div>').join('')||'Todavía no hay citas registradas.';
-}
-render();
-+total.toLocaleString('es-CO');
- todayList.className=ta.length?'':'empty';
- todayList.innerHTML=ta.map(x=>'<div class="appt"><b>'+x.time+'</b><span>'+x.name+'<br><small>'+x.service+'</small></span><span class="status">'+(x.status||'Programada')+'</span></div>').join('')||'Todavía no hay citas registradas.';
-}
-render();
-+prod.toLocaleString('es-CO')+' · Comisión '+x.commission+'%</small></span><b>
- let today=localDay(),ta=db.appointments.filter(x=>x.date===today);
- apptCount.textContent=ta.length;clientsCount.textContent=db.clients.length;
- todayList.className=ta.length?'':'empty';
- todayList.innerHTML=ta.map(x=>'<div class="appt"><b>'+x.time+'</b><span>'+x.name+'<br><small>'+x.service+'</small></span><span class="status">'+(x.status||'Programada')+'</span></div>').join('')||'Todavía no hay citas registradas.';
-}
-render();
-+com.toLocaleString('es-CO')+'</b></div>'}).join('')||'<div class="empty">Aún no hay profesionales registrados.</div>';
- vService.innerHTML=db.services.map(x=>'<option>'+x.name+'</option>').join('')||'<option>Servicio general</option>';
- vBarber.innerHTML='<option value="">Selecciona profesional</option>'+db.barbers.map(x=>'<option>'+x.name+'</option>').join('');
- salesList.innerHTML=db.sales.slice().reverse().map(x=>'<div class="row"><span><b>'+x.service+' · '+x.client+'</b><br><small>'+x.barber+' · '+x.method+'</small></span><b>
- let today=localDay(),ta=db.appointments.filter(x=>x.date===today);
- apptCount.textContent=ta.length;clientsCount.textContent=db.clients.length;
- todayList.className=ta.length?'':'empty';
- todayList.innerHTML=ta.map(x=>'<div class="appt"><b>'+x.time+'</b><span>'+x.name+'<br><small>'+x.service+'</small></span><span class="status">'+(x.status||'Programada')+'</span></div>').join('')||'Todavía no hay citas registradas.';
-}
-render();
-+Number(x.amount).toLocaleString('es-CO')+'</b></div>').join('')||'<div class="empty">Aún no hay ventas registradas.</div>';
- let today=localDay(),ta=db.appointments.filter(x=>x.date===today);
- apptCount.textContent=ta.length;clientsCount.textContent=db.clients.length;
- todayList.className=ta.length?'':'empty';
- todayList.innerHTML=ta.map(x=>'<div class="appt"><b>'+x.time+'</b><span>'+x.name+'<br><small>'+x.service+'</small></span><span class="status">'+(x.status||'Programada')+'</span></div>').join('')||'Todavía no hay citas registradas.';
-}
+const db={appointments:JSON.parse(localStorage.getItem('mb_appts')||'[]'),clients:JSON.parse(localStorage.getItem('mb_clients')||'[]'),services:JSON.parse(localStorage.getItem('mb_services')||'[]'),barbers:JSON.parse(localStorage.getItem('mb_barbers')||'[]'),sales:JSON.parse(localStorage.getItem('mb_sales')||'[]')};
+function el(id){return document.getElementById(id)}
+function save(){localStorage.setItem('mb_appts',JSON.stringify(db.appointments));localStorage.setItem('mb_clients',JSON.stringify(db.clients));localStorage.setItem('mb_services',JSON.stringify(db.services));localStorage.setItem('mb_barbers',JSON.stringify(db.barbers));localStorage.setItem('mb_sales',JSON.stringify(db.sales));render()}
+function show(id,b){document.querySelectorAll('.module').forEach(x=>x.classList.remove('active'));const s=el(id);if(s)s.classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));if(b)b.classList.add('active')}
+function goto(id){const b=[...document.querySelectorAll('nav button')].find(x=>(x.getAttribute('onclick')||'').includes("'"+id+"'"));show(id,b)}
+function localDay(d=new Date()){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function saleDay(x){return localDay(new Date(x.date))}
+function money(n){return '$'+Number(n||0).toLocaleString('es-CO')}
+function addAppointment(){const n=el('aName').value.trim();if(!n||!el('aDate').value||!el('aTime').value)return alert('Completa cliente, fecha y hora.');db.appointments.push({id:Date.now(),name:n,phone:el('aPhone').value,date:el('aDate').value,time:el('aTime').value,service:el('aService').value,status:'Programada'});el('aName').value='';el('aPhone').value='';save()}
+function addClient(){const n=el('cName').value.trim();if(!n)return alert('Escribe el nombre del cliente.');db.clients.push({id:Date.now(),name:n,phone:el('cPhone').value});el('cName').value='';el('cPhone').value='';save()}
+function addService(){const n=el('sName').value.trim(),p=Number(el('sPrice').value);if(!n||!p)return alert('Completa servicio y precio.');db.services.push({id:Date.now(),name:n,price:p});el('sName').value='';el('sPrice').value='';save()}
+function addBarber(){const n=el('bName').value.trim(),p=Number(el('bCommission').value);if(!n)return alert('Escribe el nombre del profesional.');if(p<0||p>100)return alert('La comisión debe estar entre 0 y 100%.');db.barbers.push({id:Date.now(),name:n,commission:p||0});el('bName').value='';el('bCommission').value='';save()}
+function addSale(){const amount=Number(el('vAmount').value),barber=el('vBarber').value;if(!amount)return alert('Ingresa el valor cobrado.');if(!barber)return alert('Selecciona el profesional.');db.sales.push({id:Date.now(),client:el('vClient').value.trim()||'Cliente general',service:el('vService').value||'Servicio',barber,method:el('vMethod').value,amount,date:new Date().toISOString()});el('vClient').value='';el('vAmount').value='';save()}
+function render(){el('agendaList').innerHTML=db.appointments.map(x=>'<div class="row"><span><b>'+x.time+' · '+x.name+'</b><br><small>'+x.date+' · '+x.service+'</small></span><span>'+(x.status||'Programada')+'</span></div>').join('')||'<div class="empty">Sin citas.</div>';el('clientList').innerHTML=db.clients.map(x=>'<div class="row"><b>'+x.name+'</b><small>'+x.phone+'</small></div>').join('')||'<div class="empty">Sin clientes.</div>';el('servicesList').innerHTML=db.services.map(x=>'<div class="row"><b>'+x.name+'</b><span>'+money(x.price)+'</span></div>').join('')||'<div class="empty">Sin servicios.</div>';el('barberList').innerHTML=db.barbers.map(x=>{const prod=db.sales.filter(s=>s.barber===x.name).reduce((a,s)=>a+Number(s.amount),0),com=prod*Number(x.commission)/100;return '<div class="row"><span><b>'+x.name+'</b><br><small>Producción '+money(prod)+' · Comisión '+x.commission+'%</small></span><b>'+money(com)+'</b></div>'}).join('')||'<div class="empty">Aún no hay profesionales registrados.</div>';el('vService').innerHTML=db.services.map(x=>'<option value="'+x.name+'">'+x.name+'</option>').join('')||'<option>Servicio general</option>';el('vBarber').innerHTML='<option value="">Selecciona profesional</option>'+db.barbers.map(x=>'<option value="'+x.name+'">'+x.name+'</option>').join('');el('salesList').innerHTML=db.sales.slice().reverse().map(x=>'<div class="row"><span><b>'+x.service+' · '+x.client+'</b><br><small>'+x.barber+' · '+x.method+'</small></span><b>'+money(x.amount)+'</b></div>').join('')||'<div class="empty">Aún no hay ventas registradas.</div>';const today=localDay(),ta=db.appointments.filter(x=>x.date===today),ts=db.sales.filter(x=>saleDay(x)===today),total=ts.reduce((a,x)=>a+Number(x.amount),0);el('apptCount').textContent=ta.length;el('clientsCount').textContent=new Set(ts.map(x=>x.client).filter(x=>x&&x!=='Cliente general')).size;el('serviceCount').textContent=ts.length;el('sales').textContent=money(total);el('todayList').className=ta.length?'':'empty';el('todayList').innerHTML=ta.map(x=>'<div class="appt"><b>'+x.time+'</b><span>'+x.name+'<br><small>'+x.service+'</small></span><span class="status">'+(x.status||'Programada')+'</span></div>').join('')||'Todavía no hay citas registradas.'}
 render();
 </script></body></html>
