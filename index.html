@@ -1,44 +1,35 @@
-<!doctype html>
-<html lang="es">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MIRED360 Beauty</title>
-<style>
-:root{--dark:#111827;--gold:#d4a72c;--bg:#f5f6f8;--card:#fff;--muted:#6b7280}
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#111827}
-header{background:var(--dark);color:white;padding:18px 22px;display:flex;justify-content:space-between;align-items:center}
-.brand{font-size:22px;font-weight:800}.brand span{color:var(--gold)}
-main{max-width:1100px;margin:auto;padding:24px}.hello h1{margin:0 0 5px}.hello p{margin:0;color:var(--muted)}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:22px 0}.card{background:var(--card);border-radius:16px;padding:18px;box-shadow:0 3px 14px #0000000c}
-.stat b{font-size:24px;display:block;margin-top:8px}.stat small{color:var(--muted)}
-.menu{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.action{cursor:pointer;border:0;text-align:left;font:inherit}.icon{font-size:30px}.action h3{margin:10px 0 5px}.action p{color:var(--muted);margin:0;font-size:14px}
-.today{margin-top:22px}.appt{display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding:13px 0}.pill{background:#ecfdf5;color:#047857;padding:6px 10px;border-radius:20px;font-size:12px}
-footer{text-align:center;color:var(--muted);padding:28px}
-@media(max-width:700px){.stats{grid-template-columns:1fr 1fr}.menu{grid-template-columns:1fr 1fr}main{padding:16px}}
-</style>
-</head>
-<body>
-<header><div class="brand">MIRED360 <span>Beauty</span></div><div>💈 Mi Barbería</div></header>
-<main>
-<section class="hello"><h1>Panel de tu negocio</h1><p>Todo lo importante de tu barbería en un solo lugar.</p></section>
-<section class="stats">
-<div class="card stat"><small>💰 Ventas de hoy</small><b>$0</b></div>
-<div class="card stat"><small>📅 Citas de hoy</small><b>0</b></div>
-<div class="card stat"><small>👥 Clientes atendidos</small><b>0</b></div>
-<div class="card stat"><small>✂️ Servicios realizados</small><b>0</b></div>
-</section>
-<section class="menu">
-<button class="card action" onclick="openModule('Agenda')"><div class="icon">📅</div><h3>Agenda</h3><p>Organiza citas y horarios.</p></button>
-<button class="card action" onclick="openModule('Clientes')"><div class="icon">👥</div><h3>Clientes</h3><p>Historial y datos de tus clientes.</p></button>
-<button class="card action" onclick="openModule('Servicios')"><div class="icon">✂️</div><h3>Servicios</h3><p>Cortes, barba, tratamientos y precios.</p></button>
-<button class="card action" onclick="openModule('Barberos')"><div class="icon">💈</div><h3>Barberos</h3><p>Equipo, producción y comisiones.</p></button>
-<button class="card action" onclick="openModule('Ventas')"><div class="icon">💵</div><h3>Ventas</h3><p>Registra servicios y métodos de pago.</p></button>
-<button class="card action" onclick="openModule('Reportes')"><div class="icon">📊</div><h3>Reportes</h3><p>Resultados diarios, semanales y mensuales.</p></button>
-</section>
-<section class="card today"><h2>Próximas citas</h2><div id="appointments"><p style="color:#6b7280">Todavía no hay citas registradas.</p></div></section>
-</main>
-<footer>MIRED360SERVICIOS · Software para hacer crecer tu negocio</footer>
-<script>
-function openModule(name){alert(name+' será el próximo módulo funcional de MIRED360 Beauty.');}
-</script>
-</body></html>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MIRED360 Beauty</title><style>
+:root{--bg:#071019;--panel:#0d1823;--panel2:#111f2d;--gold:#e8b84b;--text:#f8fafc;--muted:#94a3b8;--line:#203142;--green:#20c77a;--blue:#3997ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Arial}.app{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+aside{background:#08131d;border-right:1px solid var(--line);padding:24px 16px;position:sticky;top:0;height:100vh}.logo{font-weight:900;font-size:25px;margin:0 10px 28px}.logo b{color:var(--gold)}.logo small{display:block;font-size:11px;letter-spacing:4px;color:#cbd5e1;margin-top:5px}
+nav button{width:100%;border:0;background:transparent;color:#dbe5ee;padding:13px 14px;border-radius:11px;text-align:left;font-size:14px;margin:2px 0;cursor:pointer}nav button:hover,nav button.active{background:#26301f;color:#fff;border:1px solid #765d25}nav span{display:inline-block;width:28px}
+main{padding:25px 30px;max-width:1500px;width:100%;margin:auto}.top{display:flex;gap:14px;justify-content:space-between;align-items:center}.search{background:var(--panel);border:1px solid var(--line);padding:12px 16px;border-radius:12px;max-width:480px;width:100%;color:white}.user{color:var(--muted)}
+.hero{margin:22px 0;background:linear-gradient(110deg,#111e28,#151d1b);border:1px solid var(--line);border-radius:20px;padding:28px;position:relative;overflow:hidden}.hero:after{content:"✂";position:absolute;right:45px;top:-28px;font-size:150px;color:#e8b84b12;transform:rotate(-20deg)}.hero h1{font-size:34px;margin:0 0 7px}.hero h1 b{color:var(--gold)}.hero p{color:#cbd5e1;margin:0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}.stat label{color:var(--muted);font-size:13px}.stat strong{font-size:25px;display:block;margin-top:8px}.stat em{font-style:normal;color:var(--green);font-size:12px}
+.grid{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;margin-top:16px}.section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.section-title h2{font-size:18px;margin:0}.btn{border:0;border-radius:9px;background:var(--gold);color:#151515;font-weight:800;padding:10px 14px;cursor:pointer}.appt{display:grid;grid-template-columns:65px 1fr 90px;gap:10px;padding:13px 5px;border-bottom:1px solid var(--line);align-items:center}.appt small{color:var(--muted)}.status{font-size:12px;background:#123b2b;color:#53e49b;padding:6px 8px;border-radius:8px;text-align:center}.empty{color:var(--muted);padding:22px 0;text-align:center}.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}.quick button{background:var(--panel2);border:1px solid var(--line);color:white;padding:18px;border-radius:14px;text-align:left;cursor:pointer}.quick b{display:block;margin-top:8px}.module{display:none}.module.active{display:block}.form{display:grid;grid-template-columns:1fr 1fr;gap:12px}.form input,.form select{background:#07121c;border:1px solid var(--line);border-radius:9px;color:white;padding:12px}.list{margin-top:14px}.row{display:flex;justify-content:space-between;gap:12px;padding:12px;border-bottom:1px solid var(--line)}.row small{color:var(--muted)}
+@media(max-width:900px){.app{grid-template-columns:1fr}aside{height:auto;position:relative}nav{display:flex;overflow:auto}nav button{min-width:125px}.stats,.quick{grid-template-columns:1fr 1fr}.grid{grid-template-columns:1fr}}@media(max-width:520px){main{padding:15px}.stats,.quick,.form{grid-template-columns:1fr}.hero h1{font-size:27px}.user{display:none}}
+</style></head><body><div class="app"><aside><div class="logo">MIRED<b>360</b><small>BEAUTY</small></div><nav id="nav">
+<button class="active" onclick="show('inicio',this)"><span>⌂</span>Inicio</button><button onclick="show('agenda',this)"><span>▣</span>Agenda</button><button onclick="show('clientes',this)"><span>♟</span>Clientes</button><button onclick="show('servicios',this)"><span>✂</span>Servicios</button><button onclick="show('barberos',this)"><span>♙</span>Barberos</button><button onclick="show('ventas',this)"><span>$</span>Ventas</button><button onclick="show('reportes',this)"><span>▥</span>Reportes</button><button onclick="show('config',this)"><span>⚙</span>Configuración</button>
+</nav></aside><main><div class="top"><input class="search" placeholder="Buscar cliente, cita o servicio..."><div class="user">Mi Barbería · Administrador</div></div>
+<section id="inicio" class="module active"><div class="hero"><h1>Bienvenido a <b>MIRED360 Beauty</b></h1><p>Gestiona tu barbería, organiza tu equipo y mejora la experiencia de tus clientes.</p></div>
+<div class="stats"><div class="card stat"><label>💰 Ventas de hoy</label><strong id="sales">$0</strong><em>Control diario</em></div><div class="card stat"><label>👥 Clientes atendidos</label><strong id="clientsCount">0</strong><em>Hoy</em></div><div class="card stat"><label>✂ Servicios realizados</label><strong id="serviceCount">0</strong><em>Hoy</em></div><div class="card stat"><label>📅 Citas de hoy</label><strong id="apptCount">0</strong><em>Agenda</em></div></div>
+<div class="grid"><div class="card"><div class="section-title"><h2>Agenda del día</h2><button class="btn" onclick="goto('agenda')">+ Nueva cita</button></div><div id="todayList" class="empty">Todavía no hay citas registradas.</div></div><div class="card"><div class="section-title"><h2>Resumen</h2></div><div class="row"><span>Efectivo</span><b>$0</b></div><div class="row"><span>Transferencia</span><b>$0</b></div><div class="row"><span>Tarjeta</span><b>$0</b></div></div></div>
+<div class="quick"><button onclick="goto('agenda')">📅<b>Nueva cita</b></button><button onclick="goto('clientes')">👥<b>Nuevo cliente</b></button><button onclick="goto('ventas')">💰<b>Registrar venta</b></button><button onclick="goto('reportes')">📊<b>Ver reportes</b></button></div></section>
+<section id="agenda" class="module"><div class="hero"><h1>📅 Agenda</h1><p>Programa y controla las citas del negocio.</p></div><div class="card"><div class="form"><input id="aName" placeholder="Nombre del cliente"><input id="aPhone" placeholder="WhatsApp"><input id="aDate" type="date"><input id="aTime" type="time"><select id="aService"><option>Corte clásico</option><option>Corte + barba</option><option>Barba</option><option>Otro servicio</option></select><button class="btn" onclick="addAppointment()">Guardar cita</button></div><div id="agendaList" class="list"></div></div></section>
+<section id="clientes" class="module"><div class="hero"><h1>👥 Clientes</h1><p>Construye la base de clientes de tu negocio.</p></div><div class="card"><div class="form"><input id="cName" placeholder="Nombre completo"><input id="cPhone" placeholder="WhatsApp"><button class="btn" onclick="addClient()">Guardar cliente</button></div><div id="clientList" class="list"></div></div></section>
+<section id="servicios" class="module"><div class="hero"><h1>✂ Servicios</h1><p>Configura los servicios y precios de tu barbería.</p></div><div class="card"><div class="form"><input id="sName" placeholder="Servicio"><input id="sPrice" type="number" placeholder="Precio"><button class="btn" onclick="addService()">Agregar servicio</button></div><div id="servicesList" class="list"></div></div></section>
+<section id="barberos" class="module"><div class="hero"><h1>💈 Barberos</h1><p>Administra tu equipo y sus comisiones.</p></div><div class="card empty">Módulo preparado para la siguiente etapa: perfiles, horarios, producción y comisiones.</div></section>
+<section id="ventas" class="module"><div class="hero"><h1>💰 Ventas</h1><p>Registra lo que realmente produce el negocio.</p></div><div class="card empty">Siguiente etapa: servicios vendidos, profesional, método de pago y cierre diario.</div></section>
+<section id="reportes" class="module"><div class="hero"><h1>📊 Reportes</h1><p>Conoce cómo está funcionando tu barbería.</p></div><div class="card empty">Los reportes se alimentarán automáticamente de ventas, citas y servicios.</div></section>
+<section id="config" class="module"><div class="hero"><h1>⚙ Configuración</h1><p>Datos, horarios e identidad del negocio.</p></div><div class="card empty">Configuración del establecimiento y plan MIRED360 Beauty.</div></section>
+</main></div><script>
+const db={appointments:JSON.parse(localStorage.getItem('mb_appts')||'[]'),clients:JSON.parse(localStorage.getItem('mb_clients')||'[]'),services:JSON.parse(localStorage.getItem('mb_services')||'[]')};
+function save(){localStorage.setItem('mb_appts',JSON.stringify(db.appointments));localStorage.setItem('mb_clients',JSON.stringify(db.clients));localStorage.setItem('mb_services',JSON.stringify(db.services));render()}
+function show(id,b){document.querySelectorAll('.module').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));if(b)b.classList.add('active')}
+function goto(id){show(id,[...document.querySelectorAll('nav button')].find(b=>b.getAttribute('onclick')?.includes("'"+id+"'")))}
+function addAppointment(){let n=aName.value.trim();if(!n||!aDate.value||!aTime.value)return alert('Completa cliente, fecha y hora.');db.appointments.push({name:n,phone:aPhone.value,date:aDate.value,time:aTime.value,service:aService.value});aName.value=aPhone.value='';save()}
+function addClient(){let n=cName.value.trim();if(!n)return alert('Escribe el nombre del cliente.');db.clients.push({name:n,phone:cPhone.value});cName.value=cPhone.value='';save()}
+function addService(){let n=sName.value.trim(),p=Number(sPrice.value);if(!n||!p)return alert('Completa servicio y precio.');db.services.push({name:n,price:p});sName.value=sPrice.value='';save()}
+function render(){agendaList.innerHTML=db.appointments.map(x=>'<div class="row"><span><b>'+x.time+' · '+x.name+'</b><br><small>'+x.date+' · '+x.service+'</small></span><span>Programada</span></div>').join('')||'<div class="empty">Sin citas.</div>';clientList.innerHTML=db.clients.map(x=>'<div class="row"><b>'+x.name+'</b><small>'+x.phone+'</small></div>').join('')||'<div class="empty">Sin clientes.</div>';servicesList.innerHTML=db.services.map(x=>'<div class="row"><b>'+x.name+'</b><span>$'+x.price.toLocaleString('es-CO')+'</span></div>').join('')||'<div class="empty">Sin servicios.</div>';let today=new Date().toISOString().slice(0,10),ta=db.appointments.filter(x=>x.date===today);apptCount.textContent=ta.length;clientsCount.textContent=db.clients.length;todayList.className=ta.length?'':'empty';todayList.innerHTML=ta.map(x=>'<div class="appt"><b>'+x.time+'</b><span>'+x.name+'<br><small>'+x.service+'</small></span><span class="status">Programada</span></div>').join('')||'Todavía no hay citas registradas.'}
+render();
+</script></body></html>
