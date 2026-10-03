@@ -17,10 +17,8 @@ authShell.innerHTML=`
     </div>
     <div class="auth-tabs" id="authTabs">
       <button id="loginTab" class="auth-tab active" type="button">Ingresar</button>
-      <button id="registerTab" class="auth-tab" type="button">Crear cuenta</button>
     </div>
     <form id="authForm" class="auth-form">
-      <input id="authName" class="auth-hidden" autocomplete="name" placeholder="Nombre completo">
       <input id="authEmail" type="email" autocomplete="email" placeholder="Correo electrónico" required>
       <div id="otpBox" class="auth-hidden">
         <input id="authOtp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" pattern="[0-9]{6,10}" placeholder="Código de acceso">
@@ -29,19 +27,15 @@ authShell.innerHTML=`
       <button id="changeEmailBtn" class="auth-hidden" type="button">Cambiar correo</button>
     </form>
     <div id="authMessage" class="auth-message"></div>
-    <div class="auth-note">Sin contraseña. Recibirás un código temporal en tu correo.</div>
+    <div class="auth-note">Acceso exclusivo para usuarios autorizados. Recibirás un código temporal en tu correo.</div>
   </div>`;
 document.body.insertBefore(authShell,document.body.firstChild);
 
-let authMode='login';
 let otpStage=false;
 let pendingEmail='';
-let pendingName='';
 
 const loginTab=document.getElementById('loginTab');
-const registerTab=document.getElementById('registerTab');
 const authTabs=document.getElementById('authTabs');
-const authName=document.getElementById('authName');
 const authEmail=document.getElementById('authEmail');
 const otpBox=document.getElementById('otpBox');
 const authOtp=document.getElementById('authOtp');
@@ -54,22 +48,9 @@ function setAuthMessage(text,type=''){
   authMessage.className='auth-message'+(type?' '+type:'');
 }
 
-function setMode(mode){
-  if(otpStage) return;
-  authMode=mode;
-  const registering=mode==='register';
-  loginTab.classList.toggle('active',!registering);
-  registerTab.classList.toggle('active',registering);
-  authName.classList.toggle('auth-hidden',!registering);
-  authName.required=registering;
-  authSubmit.textContent='Enviar código';
-  setAuthMessage('');
-}
-
 function setOtpStage(enabled){
   otpStage=enabled;
   authTabs.classList.toggle('auth-hidden',enabled);
-  authName.classList.toggle('auth-hidden',enabled || authMode!=='register');
   authEmail.classList.toggle('auth-hidden',enabled);
   otpBox.classList.toggle('auth-hidden',!enabled);
   authOtp.required=enabled;
@@ -81,12 +62,9 @@ function setOtpStage(enabled){
   }
 }
 
-loginTab.addEventListener('click',()=>setMode('login'));
-registerTab.addEventListener('click',()=>setMode('register'));
 changeEmailBtn.addEventListener('click',()=>{
   authOtp.value='';
   pendingEmail='';
-  pendingName='';
   setOtpStage(false);
   setAuthMessage('');
   authEmail.focus();
@@ -149,20 +127,16 @@ document.getElementById('authForm').addEventListener('submit',async(e)=>{
   try{
     if(!otpStage){
       const email=authEmail.value.trim().toLowerCase();
-      const fullName=authName.value.trim();
       if(!email) throw new Error('Escribe tu correo electrónico.');
-      if(authMode==='register'&&!fullName) throw new Error('Escribe tu nombre completo.');
       setAuthMessage('Enviando código...');
       const {error}=await sbClient.auth.signInWithOtp({
         email,
         options:{
-          shouldCreateUser:authMode==='register',
-          data:authMode==='register'?{full_name:fullName}:undefined
+          shouldCreateUser:false
         }
       });
       if(error) throw error;
       pendingEmail=email;
-      pendingName=fullName;
       setOtpStage(true);
     }else{
       const token=authOtp.value.trim();
@@ -175,10 +149,6 @@ document.getElementById('authForm').addEventListener('submit',async(e)=>{
       });
       if(error) throw error;
       if(!data?.session) throw new Error('No se pudo iniciar la sesión.');
-      if(authMode==='register'&&pendingName){
-        await sbClient.auth.updateUser({data:{full_name:pendingName}});
-        await sbClient.from('profiles').update({full_name:pendingName}).eq('id',data.session.user.id);
-      }
       authOtp.value='';
       setAuthMessage('Acceso correcto.','ok');
       await showApp(data.session);
