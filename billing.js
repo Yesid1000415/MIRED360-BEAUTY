@@ -3,8 +3,9 @@ async function buyBeautyPlan(sku){
  if(!session?.user){alert('Inicia sesión para comprar tu plan.');return}
  if(!currentBusinessId) await resolveBusiness();
  if(!currentBusinessId){alert('Tu cuenta aún no tiene una barbería asignada.');return}
- const url='https://mired360servicios.com/pagar-producto.html?sku='+encodeURIComponent(sku)+'&beauty_business='+encodeURIComponent(currentBusinessId);
- location.href=url;
+ const {data:token,error}=await sbClient.rpc('create_checkout_intent',{p_business_id:currentBusinessId,p_plan_code:sku});
+ if(error||!token){alert('No pudimos preparar la compra. Intenta nuevamente.');return}
+ location.href='https://mired360servicios.com/pagar-producto.html?beauty_token='+encodeURIComponent(token);
 }
 async function loadPlanStatus(){
  const box=document.getElementById('planStatus'); if(!box||!currentBusinessId)return;
