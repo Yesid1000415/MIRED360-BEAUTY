@@ -1,0 +1,32 @@
+name: Publish verified Beauty APK
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [".github/workflows/publish-verified-apk.yml"]
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download verified APK
+        uses: actions/download-artifact@v4
+        with:
+          name: MIRED360-Beauty-APK
+          run-id: 37177161270
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify exact installer
+        run: |
+          echo '72e1595e995557cef9ebadac7b1430bf253432f460c38c2d421d8044c4a07a13  MIRED360-Beauty-Actualizada.apk' | sha256sum -c -
+          test "$(cat SOURCE_COMMIT.txt)" = "667854b975bc45d4ad3ee02ca33f9da628521ddc"
+      - name: Publish public download
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          if ! gh release view beauty-android-20261004 >/dev/null 2>&1; then
+            gh release create beauty-android-20261004 --target 667854b975bc45d4ad3ee02ca33f9da628521ddc --title "MIRED360 Beauty · Android" --notes "Instalador Android de MIRED360 Beauty. Acceso con el correo autorizado de cada comercio. Requiere Android 6 o posterior e internet. Compilación de instalación directa con firma de depuración; pendiente validación completa en dispositivos." --latest
+          fi
+          gh release upload beauty-android-20261004 MIRED360-Beauty-Actualizada.apk SHA256SUMS.txt SOURCE_COMMIT.txt --clobber
