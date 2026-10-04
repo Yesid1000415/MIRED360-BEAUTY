@@ -5,13 +5,11 @@ on:
   push:
     branches: [main]
     paths:
-      - "index.html"
-      - "styles.css"
-      - "auth.css"
-      - "auth.js"
-      - "app.js"
-      - "admin.js"
-      - "superadmin.js"
+      - "**.html"
+      - "**.css"
+      - "**.js"
+      - "**.svg"
+      - "**.webmanifest"
       - "package.json"
       - "capacitor.config.json"
       - ".github/workflows/build-android-apk.yml"
@@ -25,44 +23,43 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "21"
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Prepare web assets
+      - name: Prepare isolated Android build
         run: |
-          rm -rf www
-          mkdir -p www
-          cp index.html styles.css auth.css auth.js app.js admin.js superadmin.js www/
-
-      - name: Create Android project
-        run: npx cap add android
-
-      - name: Sync Android
-        run: npx cap sync android
-
-      - name: Build debug APK
-        working-directory: android
+          mkdir -p "$RUNNER_TEMP/beauty-build/www"
+          cp package.json capacitor.config.json "$RUNNER_TEMP/beauty-build/"
+          cp *.html *.css *.js *.svg *.webmanifest "$RUNNER_TEMP/beauty-build/www/"
+      - name: Install dependencies
+        working-directory: ${{ runner.temp }}/beauty-build
+        run: npm install
+      - name: Create and sync Android project
+        working-directory: ${{ runner.temp }}/beauty-build
+        run: |
+          npx cap add android
+          npx cap sync android
+      - name: Build installable APK
+        working-directory: ${{ runner.temp }}/beauty-build/android
         run: ./gradlew assembleDebug
-
-      - name: Rename APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk MIRED360-Beauty.apk
-
+      - name: Package APK and build reference
+        run: |
+          cp "$RUNNER_TEMP/beauty-build/android/app/build/outputs/apk/debug/app-debug.apk" MIRED360-Beauty-Actualizada.apk
+          sha256sum MIRED360-Beauty-Actualizada.apk > SHA256SUMS.txt
+          git rev-parse HEAD > SOURCE_COMMIT.txt
       - name: Upload installable APK
         uses: actions/upload-artifact@v4
         with:
           name: MIRED360-Beauty-APK
-          path: MIRED360-Beauty.apk
+          path: |
+            MIRED360-Beauty-Actualizada.apk
+            SHA256SUMS.txt
+            SOURCE_COMMIT.txt
           if-no-files-found: error
           retention-days: 30
