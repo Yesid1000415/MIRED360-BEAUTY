@@ -99,9 +99,15 @@
   async function boot(){
     if(!window.sbClient) return;
     const {data:{session}}=await window.sbClient.auth.getSession(); if(!session?.user) return;
-    const {data:profile}=await window.sbClient.from('profiles').select('role').eq('id',session.user.id).single();
-    if(profile?.role==='superadmin'){buildSuperAdmin();await loadSummary();await loadBusinesses();}
-    else cleanupForBusinessUser();
+    const {data:profile}=await window.sbClient.from('profiles').select('role').eq('id',session.user.id).maybeSingle();
+    const adminRoute=new URLSearchParams(location.search).get('admin')==='1';
+    if(profile?.role==='superadmin'){
+      buildSuperAdmin();await loadSummary();await loadBusinesses();
+      if(!adminRoute) history.replaceState(null,'',location.pathname+'?admin=1');
+    } else {
+      cleanupForBusinessUser();
+      if(adminRoute){alert('Este acceso es exclusivo del Administrador General.');history.replaceState(null,'',location.pathname);}
+    }
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,350));else setTimeout(boot,350);
   window.sbClient?.auth?.onAuthStateChange?.((_e,s)=>{if(s?.user)setTimeout(boot,350);});
