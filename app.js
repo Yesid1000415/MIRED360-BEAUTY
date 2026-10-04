@@ -36,3 +36,6 @@ async function toggleEmployee(id,active){try{await callEmployees('toggle',{id,ac
 function applyRoleUI(){if(!currentUser||!currentBusinessId)return;if(currentBusinessRole!=='business_admin'){el('employeesNav')?.remove();if(currentBusinessRole==='employee'){['servicios','barberos','reportes','config','planes'].forEach(id=>{const b=[...document.querySelectorAll('nav button')].find(x=>(x.getAttribute('onclick')||'').includes("'"+id+"'"));b?.remove()});const mine=db.barbers.find(x=>x.userId===currentUser.id);if(el('vBarber')&&mine){el('vBarber').innerHTML='<option value="'+esc(mine.name)+'">'+esc(mine.name)+'</option>';el('vBarber').disabled=true}}}}
 const _render=render;render=function(){_render();applyRoleUI()}
 window.loadEmployees=loadEmployees;window.createEmployee=createEmployee;window.toggleEmployee=toggleEmployee;
+
+async function logoutBeauty(){try{await sbClient.auth.signOut();currentUser=null;currentBusinessId=null;currentBusinessRole=null;location.reload()}catch(e){alert('No se pudo cerrar la sesión. Intenta nuevamente.')}}
+window.logoutBeauty=logoutBeauty;
