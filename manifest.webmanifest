@@ -1,0 +1,19 @@
+{
+  "name": "MIRED360 Beauty",
+  "short_name": "MIRED360 Beauty",
+  "description": "Gestión profesional para barberías y salones.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#07121c",
+  "theme_color": "#07121c",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
