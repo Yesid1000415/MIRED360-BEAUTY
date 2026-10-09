@@ -6,7 +6,7 @@ window.sbClient=sbClient;
 const appRoot=document.querySelector('.app');
 if(appRoot) appRoot.classList.add('auth-hidden');
 
-const ADMIN_EMAIL='yesidrojasrodriguez18@gmail.com';
+const ADMIN_EMAIL='ipro7163@gmail.com';
 const RECOVERY_URL='https://yesid1000415.github.io/MIRED360-BEAUTY/?recovery=1';
 const authShell=document.createElement('div');
 authShell.id='authShell';authShell.className='auth-shell';
