@@ -68,7 +68,7 @@
       const d=await callBiz('list'); const rows=d.businesses||[];
       if(!rows.length){box.innerHTML='<div class="empty">No hay comercios registrados.</div>';return;}
       box.innerHTML=rows.map(b=>`<div class="row" style="align-items:flex-start;gap:12px;flex-wrap:wrap">
-        <div style="flex:1;min-width:240px"><b>${esc(b.name)}</b><div style="color:var(--muted);font-size:13px">${esc(b.admin_email||'')} · ${esc(b.phone||'')} · ${esc(b.address||'')}</div></div>
+        <div style="flex:1;min-width:240px"><b>${esc(b.name)}</b><div style="color:var(--muted);font-size:13px">${esc(b.admin_email||'')} · ${esc(b.phone||'')} · ${esc(b.address||'')}<br><span>${b.subscription_status==='trial'?'🕐 Prueba gratis':(b.access_until&&new Date(b.access_until)<=new Date()?'⛔ Vencido':'✅ Activo')}${b.access_until?' · hasta '+new Date(b.access_until).toLocaleString('es-CO'):''}</span></div></div>
         <select id="st_${b.id}" style="background:#07121c;border:1px solid var(--line);border-radius:9px;color:white;padding:9px"><option value="active" ${b.status==='active'?'selected':''}>Activo</option><option value="pending" ${b.status==='pending'?'selected':''}>Pendiente</option><option value="suspended" ${b.status==='suspended'?'selected':''}>Suspendido</option></select>
         <button class="btn" onclick="window.editBusiness(${b.id},'${esc(b.name)}','${esc(b.phone||'')}','${esc(b.address||'')}')">Editar</button>
         <button class="btn" style="background:#6b1f1f" onclick="window.deleteBusiness(${b.id},'${esc(b.name)}')">Eliminar</button>
