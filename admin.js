@@ -1,6 +1,8 @@
 (function(){
   function esc(v){return String(v??'').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'}[s]));}
   async function callBiz(action,payload={}){
+    const {data:{session}}=await window.sbClient.auth.getSession();
+    if(!session?.access_token) throw new Error('Sesión administrativa no disponible');
     const {data,error}=await window.sbClient.functions.invoke('admin-businesses',{body:{action,...payload},headers:{Authorization:`Bearer ${session.access_token}`}});
     if(error) throw error;
     if(data?.error) throw new Error(data.error);
@@ -47,7 +49,7 @@
       main.appendChild(sec);
     }
     sec.style.display='block';sec.classList.add('active');
-    const top=document.querySelector('.top .user'); if(top) top.innerHTML='<strong>Administrador General</strong>';
+    const top=document.querySelector('.top .user'); if(top){let label=document.getElementById('topUserRole');if(label)label.textContent='Administrador General';else top.textContent='Administrador General';}
     const search=document.querySelector('.top .search'); if(search){search.placeholder='Buscar comercio...';search.value='';}
     document.getElementById('saHomeBtn').onclick=()=>window.scrollTo({top:0,behavior:'smooth'});
     document.getElementById('saBizBtn').onclick=()=>document.getElementById('bizList')?.scrollIntoView({behavior:'smooth',block:'center'});
