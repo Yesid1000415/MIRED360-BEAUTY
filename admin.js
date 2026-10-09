@@ -50,8 +50,7 @@
     const top=document.querySelector('.top .user'); if(top) top.innerHTML='<strong>Administrador General</strong>';
     const search=document.querySelector('.top .search'); if(search){search.placeholder='Buscar comercio...';search.value='';}
     document.getElementById('saHomeBtn').onclick=()=>window.scrollTo({top:0,behavior:'smooth'});
-    document.getElementById('saBizBtn').onclick=()=>document.getElementById('bizName')?.scrollIntoView({behavior:'smooth',block:'center'});
-    document.getElementById('bizCreateBtn').onclick=createBusiness;
+    document.getElementById('saBizBtn').onclick=()=>document.getElementById('bizList')?.scrollIntoView({behavior:'smooth',block:'center'});
     document.getElementById('bizRefreshBtn').onclick=loadBusinesses;
   }
   async function loadSummary(){
