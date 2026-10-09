@@ -6,162 +6,25 @@ window.sbClient=sbClient;
 const appRoot=document.querySelector('.app');
 if(appRoot) appRoot.classList.add('auth-hidden');
 
+const ADMIN_EMAIL='yesidrojasrodriguez18@gmail.com';
 const authShell=document.createElement('div');
-authShell.id='authShell';
-authShell.className='auth-shell';
-authShell.innerHTML=`
-  <div class="auth-card">
-    <div class="auth-brand">
-      <div class="logo">MIRED<b>360</b><small>BEAUTY</small></div>
-      <p>Acceso seguro con código temporal.</p>
-    </div>
-    <div class="auth-tabs" id="authTabs">
-      <button id="loginTab" class="auth-tab active" type="button">Ingresar</button>
-    </div>
-    <form id="authForm" class="auth-form">
-      <input id="authEmail" type="email" autocomplete="email" placeholder="Correo electrónico" required>
-      <div id="otpBox" class="auth-hidden">
-        <input id="authOtp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" pattern="[0-9]{6,10}" placeholder="Código de acceso">
-      </div>
-      <button id="authSubmit" class="btn" type="submit">Enviar código</button>
-      <button id="changeEmailBtn" class="auth-hidden" type="button">Cambiar correo</button>
-    </form>
-    <div id="authMessage" class="auth-message"></div>
-    <div class="auth-note">Acceso exclusivo para usuarios autorizados. Recibirás un código temporal en tu correo.</div>
-  </div>`;
+authShell.id='authShell';authShell.className='auth-shell';
+authShell.innerHTML=`<div class="auth-card"><div class="auth-brand"><div class="logo">MIRED<b>360</b><small>BEAUTY</small></div><p>Tu barbería o salón, en un solo lugar.</p></div><form id="authForm" class="auth-form"><input id="authEmail" type="email" autocomplete="email" placeholder="Correo electrónico" required><input id="authPass" type="password" autocomplete="current-password" minlength="6" placeholder="Contraseña (mínimo 6 caracteres)" required><button id="loginBtn" class="btn" type="submit">INGRESAR</button><button id="signupBtn" type="button">CREAR MI CUENTA</button></form><div id="authMessage" class="auth-message"></div><div class="auth-note">¿Nuevo? Crea tu propia cuenta y contraseña. Después registrarás tu barbería o salón y tendrás 24 horas de prueba gratis.</div></div>`;
 document.body.insertBefore(authShell,document.body.firstChild);
-
-let otpStage=false;
-let pendingEmail='';
-
-const loginTab=document.getElementById('loginTab');
-const authTabs=document.getElementById('authTabs');
-const authEmail=document.getElementById('authEmail');
-const otpBox=document.getElementById('otpBox');
-const authOtp=document.getElementById('authOtp');
-const authSubmit=document.getElementById('authSubmit');
-const changeEmailBtn=document.getElementById('changeEmailBtn');
-const authMessage=document.getElementById('authMessage');
-
-function setAuthMessage(text,type=''){
-  authMessage.textContent=text||'';
-  authMessage.className='auth-message'+(type?' '+type:'');
+const authEmail=document.getElementById('authEmail'),authPass=document.getElementById('authPass'),authMessage=document.getElementById('authMessage');
+function setAuthMessage(t,type=''){authMessage.textContent=t||'';authMessage.className='auth-message'+(type?' '+type:'')}
+function friendlyAuthError(e){const m=(e?.message||'').toLowerCase();if(m.includes('invalid login'))return 'Correo o contraseña incorrectos.';if(m.includes('already registered'))return 'Este correo ya tiene una cuenta. Usa INGRESAR.';return e?.message||'No fue posible completar el acceso.'}
+function ensureLogoutButton(user){const userBox=document.querySelector('.top .user');if(!userBox)return;let label=document.getElementById('authUserEmail');if(!label){label=document.createElement('small');label.id='authUserEmail';label.style.display='block';label.style.marginTop='4px';userBox.appendChild(label)}label.textContent=user?.email||'';if(!document.getElementById('logoutBtn')){const b=document.createElement('button');b.id='logoutBtn';b.className='logout-btn';b.type='button';b.textContent='Cerrar sesión';b.onclick=()=>sbClient.auth.signOut();userBox.appendChild(b)}}
+async function ensureBeautyBusiness(user){
+ if(user.email?.toLowerCase()===ADMIN_EMAIL)return;
+ const {data}=await sbClient.from('businesses').select('id,access_until').or('user_id.eq.'+user.id+',admin_user_id.eq.'+user.id).limit(1);
+ if(data?.length)return;
+ const name=prompt('Nombre de tu barbería o salón:');if(!name){await sbClient.auth.signOut();throw new Error('Debes registrar el nombre de tu negocio para comenzar.')}
+ const phone=prompt('Teléfono del negocio (opcional):')||'';const address=prompt('Dirección (opcional):')||'';
+ const {error}=await sbClient.rpc('start_beauty_trial',{p_name:name.trim(),p_phone:phone.trim(),p_address:address.trim()});if(error)throw error;
 }
-
-function setOtpStage(enabled){
-  otpStage=enabled;
-  authTabs.classList.toggle('auth-hidden',enabled);
-  authEmail.classList.toggle('auth-hidden',enabled);
-  otpBox.classList.toggle('auth-hidden',!enabled);
-  authOtp.required=enabled;
-  changeEmailBtn.classList.toggle('auth-hidden',!enabled);
-  authSubmit.textContent=enabled?'Verificar y entrar':'Enviar código';
-  if(enabled){
-    setAuthMessage('Escribe el código enviado a '+pendingEmail+'.','ok');
-    setTimeout(()=>authOtp.focus(),50);
-  }
-}
-
-changeEmailBtn.addEventListener('click',()=>{
-  authOtp.value='';
-  pendingEmail='';
-  setOtpStage(false);
-  setAuthMessage('');
-  authEmail.focus();
-});
-
-authOtp.addEventListener('input',()=>{
-  authOtp.value=authOtp.value.replace(/\D/g,'').slice(0,10);
-});
-
-function friendlyAuthError(err){
-  const msg=(err?.message||'').toLowerCase();
-  if(msg.includes('rate limit')) return 'Se alcanzó temporalmente el límite de envío de correos. Espera unos minutos e inténtalo de nuevo.';
-  if(msg.includes('token has expired')||msg.includes('expired')) return 'El código venció. Solicita uno nuevo.';
-  if(msg.includes('invalid')&&msg.includes('token')) return 'El código no es válido. Revísalo e intenta nuevamente.';
-  return err?.message||'No fue posible completar el acceso.';
-}
-
-function ensureLogoutButton(user){
-  const userBox=document.querySelector('.top .user');
-  if(!userBox) return;
-  let label=document.getElementById('authUserEmail');
-  if(!label){
-    label=document.createElement('small');
-    label.id='authUserEmail';
-    label.style.display='block';
-    label.style.marginTop='4px';
-    userBox.appendChild(label);
-  }
-  label.textContent=user?.email||'';
-  if(!document.getElementById('logoutBtn')){
-    const btn=document.createElement('button');
-    btn.id='logoutBtn';
-    btn.className='logout-btn';
-    btn.type='button';
-    btn.textContent='Cerrar sesión';
-    btn.addEventListener('click',async()=>{
-      btn.disabled=true;
-      await sbClient.auth.signOut();
-      btn.disabled=false;
-    });
-    userBox.appendChild(btn);
-  }
-}
-
-async function showApp(session){
-  if(!session?.user){
-    if(appRoot) appRoot.classList.add('auth-hidden');
-    authShell.classList.remove('auth-hidden');
-    return;
-  }
-  authShell.classList.add('auth-hidden');
-  if(appRoot) appRoot.classList.remove('auth-hidden');
-  ensureLogoutButton(session.user);
-  if(typeof window.loadCloudData==='function') await window.loadCloudData();
-}
-
-document.getElementById('authForm').addEventListener('submit',async(e)=>{
-  e.preventDefault();
-  authSubmit.disabled=true;
-  try{
-    if(!otpStage){
-      const email=authEmail.value.trim().toLowerCase();
-      if(!email) throw new Error('Escribe tu correo electrónico.');
-      setAuthMessage('Enviando código...');
-      const {error}=await sbClient.auth.signInWithOtp({
-        email,
-        options:{
-          shouldCreateUser:false
-        }
-      });
-      if(error) throw error;
-      pendingEmail=email;
-      setOtpStage(true);
-    }else{
-      const token=authOtp.value.trim();
-      if(!/^\d{6,10}$/.test(token)) throw new Error('Escribe el código completo recibido en tu correo.');
-      setAuthMessage('Verificando código...');
-      const {data,error}=await sbClient.auth.verifyOtp({
-        email:pendingEmail,
-        token,
-        type:'email'
-      });
-      if(error) throw error;
-      if(!data?.session) throw new Error('No se pudo iniciar la sesión.');
-      authOtp.value='';
-      setAuthMessage('Acceso correcto.','ok');
-      await showApp(data.session);
-    }
-  }catch(err){
-    setAuthMessage(friendlyAuthError(err),'error');
-  }finally{
-    authSubmit.disabled=false;
-  }
-});
-
-sbClient.auth.onAuthStateChange((_event,session)=>showApp(session));
-(async()=>{
-  const {data}=await sbClient.auth.getSession();
-  await showApp(data.session);
-})();
+async function showApp(session){if(!session?.user){if(appRoot)appRoot.classList.add('auth-hidden');authShell.classList.remove('auth-hidden');return}try{await ensureBeautyBusiness(session.user);authShell.classList.add('auth-hidden');if(appRoot)appRoot.classList.remove('auth-hidden');ensureLogoutButton(session.user);if(typeof window.loadCloudData==='function')await window.loadCloudData()}catch(e){if(appRoot)appRoot.classList.add('auth-hidden');authShell.classList.remove('auth-hidden');setAuthMessage(e.message.includes('trial_already_used')?'Este correo ya utilizó la prueba gratuita.':friendlyAuthError(e),'error')}}
+document.getElementById('authForm').addEventListener('submit',async e=>{e.preventDefault();setAuthMessage('Ingresando...');const{error}=await sbClient.auth.signInWithPassword({email:authEmail.value.trim().toLowerCase(),password:authPass.value});if(error)setAuthMessage(friendlyAuthError(error),'error')});
+document.getElementById('signupBtn').addEventListener('click',async()=>{const email=authEmail.value.trim().toLowerCase(),password=authPass.value;if(email===ADMIN_EMAIL)return setAuthMessage('Esta cuenta está reservada para ADMIN MIRED360 Beauty. Usa INGRESAR.','error');if(!email||password.length<6)return setAuthMessage('Escribe tu correo y crea una contraseña de mínimo 6 caracteres.','error');setAuthMessage('Creando tu cuenta...');const{data,error}=await sbClient.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}});if(error)return setAuthMessage(friendlyAuthError(error),'error');if(data.session){setAuthMessage('Cuenta creada. Registra tu negocio para iniciar la prueba.','ok');await showApp(data.session)}else setAuthMessage('Cuenta creada. Confirma tu correo y luego ingresa con la contraseña que acabas de crear.','ok')});
+sbClient.auth.onAuthStateChange((_event,session)=>{setTimeout(()=>showApp(session),0)});
+(async()=>{const{data}=await sbClient.auth.getSession();await showApp(data.session)})();
