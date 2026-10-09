@@ -9,5 +9,8 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^7.4.3"
+  },
+  "scripts": {
+    "build:android": "rm -rf www && mkdir -p www && cp index.html app.js auth.js admin.js billing.js auth.css styles.css www/ && npx cap add android && npx cap sync android"
   }
 }
