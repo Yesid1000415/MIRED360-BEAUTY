@@ -31,6 +31,8 @@ function ensureLogoutButton(user){const userBox=document.querySelector('.top .us
 async function ensureBeautyBusiness(user){
  const email=user.email?.trim().toLowerCase();
  if(email===ADMIN_EMAIL)return;
+ // Recovery/password-reset sessions must never start business onboarding.
+ if(recoveryMode||recoveryRequested())return;
  const {data}=await sbClient.from('businesses').select('id,access_until').or('user_id.eq.'+user.id+',admin_user_id.eq.'+user.id).limit(1);
  if(data?.length){const b=data[0];if(b.access_until&&new Date(b.access_until)<=new Date()){if(appRoot)appRoot.classList.add('auth-hidden');authShell.classList.remove('auth-hidden');setAuthMessage('Tu prueba o plan terminó. Tus datos siguen guardados. Renueva tu plan para continuar.','error');throw new Error('subscription_expired')}return;}
  const name=prompt('Nombre de tu barbería o salón:');if(!name){await sbClient.auth.signOut();throw new Error('Debes registrar el nombre de tu negocio para comenzar.')}
@@ -41,5 +43,5 @@ async function showApp(session){if(recoveryMode||recoveryRequested()){enterRecov
 document.getElementById('authForm').addEventListener('submit',async e=>{e.preventDefault();setAuthMessage('Ingresando...');const{error}=await sbClient.auth.signInWithPassword({email:authEmail.value.trim().toLowerCase(),password:authPass.value});if(error)setAuthMessage(friendlyAuthError(error),'error')});
 document.getElementById('signupBtn').addEventListener('click',async()=>{const email=authEmail.value.trim().toLowerCase(),password=authPass.value;if(!email||password.length<6)return setAuthMessage('Escribe tu correo y crea una contraseña de mínimo 6 caracteres.','error');setAuthMessage('Creando tu cuenta...');const{data,error}=await sbClient.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}});if(error)return setAuthMessage(friendlyAuthError(error),'error');if(data.session){setAuthMessage('Cuenta creada. Registra tu negocio para iniciar la prueba.','ok');await showApp(data.session)}else setAuthMessage('Cuenta creada. Confirma tu correo y luego ingresa con la contraseña que acabas de crear.','ok')});
 document.getElementById('forgotBtn').addEventListener('click',async()=>{const email=authEmail.value.trim().toLowerCase();if(!email)return setAuthMessage('Escribe primero tu correo electrónico.','error');setAuthMessage('Enviando enlace para cambiar contraseña...');const{error}=await sbClient.auth.resetPasswordForEmail(email,{redirectTo:RECOVERY_URL});if(error)return setAuthMessage(friendlyAuthError(error),'error');setAuthMessage('Revisa tu correo. Te enviamos el enlace para cambiar tu contraseña.','ok')});
-sbClient.auth.onAuthStateChange((event,session)=>{if(event==='PASSWORD_RECOVERY'){enterRecoveryMode();return}setTimeout(()=>showApp(session),0)});
+sbClient.auth.onAuthStateChange((event,session)=>{if(event==='PASSWORD_RECOVERY'||recoveryRequested()){enterRecoveryMode();return}setTimeout(()=>showApp(session),0)});
 (async()=>{const{data}=await sbClient.auth.getSession();await showApp(data.session)})();
