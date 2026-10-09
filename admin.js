@@ -1,7 +1,7 @@
 (function(){
   function esc(v){return String(v??'').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'}[s]));}
   async function callBiz(action,payload={}){
-    const {data,error}=await window.sbClient.functions.invoke('admin-businesses',{body:{action,...payload}});
+    const {data,error}=await window.sbClient.functions.invoke('admin-businesses',{body:{action,...payload},headers:{Authorization:`Bearer ${session.access_token}`}});
     if(error) throw error;
     if(data?.error) throw new Error(data.error);
     return data;
