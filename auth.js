@@ -18,7 +18,7 @@ function ensureLogoutButton(user){const userBox=document.querySelector('.top .us
 async function ensureBeautyBusiness(user){
  if(user.email?.toLowerCase()===ADMIN_EMAIL)return;
  const {data}=await sbClient.from('businesses').select('id,access_until').or('user_id.eq.'+user.id+',admin_user_id.eq.'+user.id).limit(1);
- if(data?.length)return;
+ if(data?.length){const b=data[0];if(b.access_until&&new Date(b.access_until)<=new Date()){if(appRoot)appRoot.classList.add('auth-hidden');authShell.classList.remove('auth-hidden');setAuthMessage('Tu prueba o plan terminó. Tus datos siguen guardados. Renueva tu plan para continuar.','error');throw new Error('subscription_expired')}return;}
  const name=prompt('Nombre de tu barbería o salón:');if(!name){await sbClient.auth.signOut();throw new Error('Debes registrar el nombre de tu negocio para comenzar.')}
  const phone=prompt('Teléfono del negocio (opcional):')||'';const address=prompt('Dirección (opcional):')||'';
  const {error}=await sbClient.rpc('start_beauty_trial',{p_name:name.trim(),p_phone:phone.trim(),p_address:address.trim()});if(error)throw error;
